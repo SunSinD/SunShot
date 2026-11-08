@@ -1,16 +1,5 @@
-# Security Policy
+# Security
 
-## Reporting a Vulnerability
+Report vulnerabilities privately through [SunShot's security page](https://github.com/SunSinD/SunShot/security/advisories/new). Include the version, steps to reproduce, and expected behavior. Do not include real screenshots, account credentials, or private settings files.
 
-We take the security of our project seriously. If you discover a security vulnerability, we appreciate your help in disclosing it to us in a responsible manner.
-
-To report a security vulnerability, please follow these steps:
-
-1. Visit our [Security Page](https://github.com/ShareX/ShareX/security) on GitHub.
-2. Click on the "Report a vulnerability" button.
-3. Provide a detailed description of the vulnerability, including steps to reproduce if possible.
-4. Allow us a reasonable amount of time to address and mitigate the issue before disclosing it publicly.
-
-We encourage you to play a crucial role in keeping our project secure, and we thank you for your contributions to the community.
-
-Thank you for your cooperation.
+SunShot is an early beta. Security fixes target the latest SunShot release; upstream ShareX releases are maintained separately.

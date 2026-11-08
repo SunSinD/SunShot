@@ -21,3 +21,4 @@
 *.csproj text eol=crlf
 *.cs text eol=crlf
 *.resx text eol=crlf
+Licenses/Additional/*.txt -whitespace

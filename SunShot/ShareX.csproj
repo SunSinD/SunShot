@@ -1,0 +1,58 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows10.0.22621.0</TargetFramework>
+    <OutputType>WinExe</OutputType>
+    <AssemblyName>SunShot</AssemblyName>
+    <ApplicationIcon>ShareX_Icon.ico</ApplicationIcon>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Description>A clean screen capture and recording app.</Description>
+    <SupportedOSPlatformVersion>10.0.22621.0</SupportedOSPlatformVersion>
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+    <ForceDesignerDpiUnaware>true</ForceDesignerDpiUnaware>
+    <ApplicationVisualStyles>true</ApplicationVisualStyles>
+    <ApplicationUseCompatibleTextRendering>false</ApplicationUseCompatibleTextRendering>
+    <ApplicationDefaultFont>Microsoft Sans Serif, 8.25pt</ApplicationDefaultFont>
+    <CETCompat>false</CETCompat>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia.Win32.Interoperability" />
+    <PackageReference Include="Newtonsoft.Json" />
+    <PackageReference Include="SkiaSharp" />
+    <PackageReference Include="SkiaSharp.Views.WindowsForms" />
+    <PackageReference Include="ZXing.Net" />
+    <PackageReference Include="ZXing.Net.Bindings.Windows.Compatibility" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\SunShot.HistoryLib\ShareX.HistoryLib.csproj" />
+    <ProjectReference Include="..\SunShot.ImageEditor.App\ShareX.ImageEditor.App.csproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <SkipGetTargetFrameworkProperties>true</SkipGetTargetFrameworkProperties>
+    </ProjectReference>
+    <ProjectReference Include="..\SunShot.ImageEditor\ShareX.ImageEditor.csproj" />
+    <ProjectReference Include="..\SunShot.ImageEffectsLib\ShareX.ImageEffectsLib.csproj" />
+    <ProjectReference Include="..\SunShot.IndexerLib\ShareX.IndexerLib.csproj" />
+    <ProjectReference Include="..\SunShot.MediaLib\ShareX.MediaLib.csproj" />
+    <ProjectReference Include="..\SunShot.NativeMessagingHost\ShareX.NativeMessagingHost.csproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <SkipGetTargetFrameworkProperties>true</SkipGetTargetFrameworkProperties>
+    </ProjectReference>
+    <ProjectReference Include="..\SunShot.ScreenCaptureLib\ShareX.ScreenCaptureLib.csproj" />
+    <ProjectReference Include="..\SunShot.HelpersLib\ShareX.HelpersLib.csproj" />
+    <ProjectReference Include="..\SunShot.UploadersLib\ShareX.UploadersLib.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="host-manifest-chrome.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="host-manifest-firefox.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="ShareX_File_Icon.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <RuntimeHostConfigurationOption Include="System.Globalization.UseNls" Value="true" />
+  </ItemGroup>
+</Project>

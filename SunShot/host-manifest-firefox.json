@@ -1,0 +1,9 @@
+﻿{
+  "name": "SunShot",
+  "description": "SunShot",
+  "path": "ShareX_NativeMessagingHost.exe",
+  "type": "stdio",
+  "allowed_extensions": [
+    "firefox@getsharex.com"
+  ]
+}

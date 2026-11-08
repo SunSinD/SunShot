@@ -2,16 +2,16 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "C#: ShareX",
+            "name": "C#: SunShot",
             "type": "dotnet",
             "request": "launch",
-            "projectPath": "${workspaceFolder}/ShareX/ShareX.csproj"
+            "projectPath": "${workspaceFolder}/SunShot/ShareX.csproj"
         },
         {
-            "name": "C#: ShareX.ImageEditor.App",
+            "name": "C#: SunShot.ImageEditor.App",
             "type": "dotnet",
             "request": "launch",
-            "projectPath": "${workspaceFolder}/ShareX.ImageEditor.App/ShareX.ImageEditor.App.csproj"
+            "projectPath": "${workspaceFolder}/SunShot.ImageEditor.App/ShareX.ImageEditor.App.csproj"
         }
     ]
 }

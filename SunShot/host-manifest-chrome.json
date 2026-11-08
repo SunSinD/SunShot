@@ -1,0 +1,9 @@
+﻿{
+  "name": "com.sunshot.sunshot",
+  "description": "SunShot",
+  "path": "ShareX_NativeMessagingHost.exe",
+  "type": "stdio",
+  "allowed_origins": [
+    "chrome-extension://nlkoigbdolhchiicbonbihbphgamnaoc/"
+  ]
+}

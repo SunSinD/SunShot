@@ -1,50 +1,54 @@
-<p align="center"><a href="https://getsharex.com"><img src="https://getsharex.com/img/ShareX_Banner.png" alt="ShareX Banner"/></a></p>
-<h3 align="center">Screen capture, file sharing and productivity tool</h3>
-<br>
-<div align="center">
-  <a href="https://github.com/ShareX/ShareX/actions/workflows/build.yml"><img src="https://img.shields.io/github/actions/workflow/status/ShareX/ShareX/build.yml?branch=develop&label=Build&cacheSeconds=3600" alt="GitHub Workflow Status"/></a>
-  <a href="./LICENSE.txt"><img src="https://img.shields.io/github/license/ShareX/ShareX?label=License&color=brightgreen&cacheSeconds=3600" alt="License"/></a>
-  <a href="https://github.com/ShareX/ShareX/releases/latest"><img src="https://img.shields.io/github/v/release/ShareX/ShareX?label=Release&color=brightgreen&cacheSeconds=3600" alt="Release"/></a>
-  <a href="https://getsharex.com/downloads"><img src="https://img.shields.io/github/downloads/ShareX/ShareX/total?label=Downloads&cacheSeconds=3600" alt="Downloads"/></a>
-  <a href="https://discord.gg/ShareX"><img src="https://img.shields.io/discord/194170124859736065?label=Discord&cacheSeconds=3600" alt="Discord"/></a>
-  <a href="https://twitter.com/intent/follow?screen_name=ShareX"><img src="https://img.shields.io/twitter/follow/ShareX?cacheSeconds=3600" alt="Twitter"/></a>
-</div>
-<br>
-<p align="center"><a href="https://getsharex.com"><img src="https://getsharex.com/img/ShareX_Screenshot.png" alt="ShareX Screenshot"/></a></p>
-<p align="center">For further information please check our <a href="https://getsharex.com">website</a></p>
+<p align="center"><img src="assets/sunshot.png" width="96" alt="SunShot logo"></p>
 
-## Links
-* Official website: https://getsharex.com
-* GitHub: https://github.com/ShareX/ShareX
-* Changelog: https://getsharex.com/changelog
-* Privacy policy: https://getsharex.com/privacy-policy
-* Donate: https://getsharex.com/donate
-* Twitter: https://twitter.com/ShareX
-* Discord: https://discord.gg/ShareX
-* Reddit: https://www.reddit.com/r/sharex
-* Steam page: https://store.steampowered.com/app/400040/ShareX/
-* Microsoft Store page: https://apps.microsoft.com/detail/9nblggh4z1sp
+# SunShot
 
-## Documents
-* Image effects: https://getsharex.com/image-effects
-* Actions: https://getsharex.com/actions
-* Dev builds: https://getsharex.com/docs/dev-builds
-* Keybinds: https://getsharex.com/docs/keybinds
-* Scrolling screenshot: https://getsharex.com/docs/scrolling-screenshot
-* Command line arguments: https://getsharex.com/docs/command-line-arguments
-* Translation: https://getsharex.com/docs/translation
-* OCR: https://getsharex.com/docs/ocr
-* Custom uploader: https://getsharex.com/docs/custom-uploader
-* Amazon S3 guide: https://getsharex.com/docs/amazon-s3
-* Google Cloud Storage guide: https://getsharex.com/docs/google-cloud-storage
-* Cloudflare R2 guide: https://getsharex.com/docs/cloudflare-r2
-* Brand assets: https://getsharex.com/brand-assets
+A clean screen capture and recording app.
 
-## Star History
-<a href="https://www.star-history.com/?repos=ShareX%2FShareX&type=date&legend=bottom-right">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=ShareX/ShareX&type=date&theme=dark&legend=bottom-right" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=ShareX/ShareX&type=date&legend=bottom-right" />
-   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=ShareX/ShareX&type=date&legend=bottom-right" />
- </picture>
-</a>
+Capture your screen, add annotations, and copy, save or share the result. SunShot builds on ShareX 21.0.0 with familiar menus, fewer distractions, and its own settings and updates.
+
+## Download
+
+Get the [latest release](https://github.com/SunSinD/SunShot/releases/latest). Requires **Windows 11 22H2 or newer, x64**. The .NET runtime is included.
+
+- **Installer:** run `SunShot-0.1.0-setup-x64.exe`.
+- **Portable:** extract `SunShot-0.1.0-portable-x64.zip` to a writable folder and open `SunShot.exe`. Keep the whole folder together.
+
+Version 0.1.0 is an early beta. Downloads are unsigned, so Windows may show a publisher warning.
+
+## Make it yours
+
+- Capture regions, windows, full screens, and scrolling pages.
+- Record video or GIFs. SunShot offers to download FFmpeg on first use.
+- Annotate images with arrows, text, shapes, blur, and other editor tools.
+- Use the compact capture, copy, save, edit, and upload toolbar.
+- Keep capture history, custom shortcuts, workflows, and your preferred upload destination.
+- Use the existing light and dark themes and translations, including French.
+
+New profiles start in English. You can choose another language in Application settings.
+
+New profiles save and copy screenshots locally. Uploading is optional. Configure your destination before using it; services needing application keys are not preconfigured. Custom uploaders and services with your own credentials remain available.
+
+## Moving from ShareX
+
+Choose **Import ShareX settings** in the main window and select a ShareX **21.0** profile. SunShot copies the settings, backs up its current profile, and restarts. Uploading, hotkeys, external actions, and watch folders stay disabled until you review them. Your ShareX files are preserved.
+
+Close ShareX before enabling the same global shortcuts in SunShot. See [migration](docs/MIGRATION.md) for details and limits.
+
+## Build and checks
+
+Use the .NET 10 SDK on Windows:
+
+```powershell
+dotnet build SunShot/ShareX.csproj -c Release -p:Platform=x64 --self-contained true --source https://api.nuget.org/v3/index.json
+./build/Package.ps1
+```
+
+Packaging also needs Inno Setup 6.5 or newer, available through `-IsccPath`. See [testing](docs/TESTING.md), [privacy](docs/PRIVACY.md), and [changes](CHANGELOG.md).
+
+Development is AI-assisted. Feedback and C#/WinForms contributions are welcome.
+
+## Credits and license
+
+Based on [ShareX 21.0.0](https://github.com/ShareX/ShareX/tree/v21.0.0), by the ShareX team and contributors. SunShot is an independent project by SunSinD. Original copyright notices, translations, and third-party licenses are preserved.
+
+Licensed under [GPL-3.0](LICENSE.txt). See [third-party software](docs/THIRD-PARTY.md) for bundled components and source links.
