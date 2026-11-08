@@ -1,6 +1,6 @@
 # Moving from ShareX
 
-ShareX 22 import, history import and capture-folder reuse require the upcoming SunShot 0.1.1. The published 0.1.0 release imports ShareX 21 settings only.
+ShareX 22 import, history import and capture-folder reuse require SunShot 0.1.1 or newer. The older 0.1.0 release imports ShareX 21 settings only.
 
 SunShot uses `Documents\SunShot` for installed settings, captures, and history. Portable builds use the `SunShot` folder beside `SunShot.exe`. Neither mode automatically opens ShareX's profile or follows its `PersonalPath.cfg`.
 

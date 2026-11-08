@@ -46,7 +46,7 @@ New profiles start in English and copy and save screenshots locally. Automatic u
 
 Choose **Import ShareX settings** in the main window and select your ShareX profile folder, usually `Documents\ShareX`.
 
-The published **0.1.0 release accepts ShareX 21.0 settings**. The upcoming **0.1.1 release also accepts 22.0 through 22.4**, with a compatibility report before importing. It can merge capture history while leaving images in place, and optionally keep saving new captures in the existing ShareX screenshot folder. Common settings carry over; newer tools, native recording and themes have limits explained in the report.
+**SunShot 0.1.1 accepts ShareX 21.0 and 22.0 through 22.4 settings**, with a compatibility report before importing. It can merge capture history while leaving images in place, and optionally keep saving new captures in the existing ShareX screenshot folder. Common settings carry over; newer tools, native recording and themes have limits explained in the report. The older 0.1.0 release supports ShareX 21.0 settings only.
 
 SunShot backs up its current profile, copies the settings and restarts. Your ShareX files are preserved. Uploading, hotkeys, external actions and watch folders stay disabled until you review them. Close ShareX before enabling the same global shortcuts in SunShot.
 
