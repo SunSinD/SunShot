@@ -60,10 +60,12 @@ namespace ShareX
             NativeMethods.UseImmersiveDarkMode(Handle, ShareXResources.IsDarkTheme);
 
             await UpdateControls();
+            if (IsDisposed || Disposing) return;
 
             DebugHelper.WriteLine("Startup time: {0} ms", Program.StartTimer.ElapsedMilliseconds);
 
             await Program.CLI.UseCommandLineArgs();
+            if (IsDisposed || Disposing) return;
 
             if (Program.Settings.ActionsToolbarRunAtStartup)
             {
@@ -243,6 +245,7 @@ namespace ShareX
 
         public async Task UpdateControls()
         {
+            if (IsDisposed || Disposing) return;
             IsReady = false;
 
             niTray.Visible = Program.Settings.ShowTray;
@@ -305,6 +308,7 @@ namespace ShareX
             AfterApplicationSettingsJobs();
 
             await InitHotkeys();
+            if (IsDisposed || Disposing) return;
 
             IsReady = true;
         }
@@ -364,6 +368,7 @@ namespace ShareX
         private async Task InitHotkeys()
         {
             await Task.Run(() => SettingManager.WaitHotkeysConfig());
+            if (IsDisposed || Disposing) return;
 
             if (Program.HotkeyManager == null)
             {

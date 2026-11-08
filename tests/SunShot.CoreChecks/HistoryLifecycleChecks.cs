@@ -67,6 +67,58 @@ internal static class HistoryLifecycleChecks
         }
         finally { CultureInfo.CurrentUICulture = original; }
         CheckImportedViews(check);
+        CheckClosedStartup(check);
+    }
+
+    private sealed class StartupContext : System.Threading.SynchronizationContext
+    {
+        internal readonly System.Collections.Concurrent.ConcurrentQueue<(System.Threading.SendOrPostCallback Callback, object State)> Pending = new();
+        public override void Post(System.Threading.SendOrPostCallback callback, object state) => Pending.Enqueue((callback, state));
+    }
+
+    private static void CheckClosedStartup(Action<bool, string> check)
+    {
+        const BindingFlags flags = BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
+        Type program = typeof(TaskSettings).Assembly.GetType("ShareX.Program");
+        Type settings = typeof(TaskSettings).Assembly.GetType("ShareX.SettingManager");
+        var properties = new[] { "Settings", "DefaultTaskSettings", "UploadersConfig", "HotkeysConfig" }
+            .Select(name => program.GetProperty(name, flags)).ToArray();
+        object[] originals = properties.Select(property => property.GetValue(null)).ToArray();
+        var ready = (System.Threading.ManualResetEvent)settings.GetField("hotkeysConfigResetEvent", flags).GetValue(null);
+        bool wasReady = ready.WaitOne(0);
+        var previousContext = System.Threading.SynchronizationContext.Current;
+        try
+        {
+            var config = new ApplicationConfig { DisableHotkeys = true, DisableUpload = true, AutoCheckUpdate = false };
+            properties[0].SetValue(null, config);
+            properties[1].SetValue(null, config.DefaultTaskSettings);
+            properties[2].SetValue(null, new ShareX.UploadersLib.UploadersConfig());
+            properties[3].SetValue(null, new HotkeysConfig());
+            using var form = new MainForm();
+            ready.Reset();
+            properties[3].SetValue(null, null);
+            var context = new StartupContext();
+            System.Threading.SynchronizationContext.SetSynchronizationContext(context);
+            var startup = (System.Threading.Tasks.Task)typeof(MainForm).GetMethod("InitHotkeys", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(form, null);
+            System.Threading.SynchronizationContext.SetSynchronizationContext(previousContext);
+            form.Dispose();
+            properties[3].SetValue(null, new HotkeysConfig());
+            ready.Set();
+            var timer = System.Diagnostics.Stopwatch.StartNew();
+            while (!startup.IsCompleted && timer.ElapsedMilliseconds < 5000)
+            {
+                while (context.Pending.TryDequeue(out var work)) work.Callback(work.State);
+                System.Threading.Thread.Sleep(10);
+            }
+            check(startup.IsCompletedSuccessfully, "closing during startup prevents pending hotkey initialization from touching disposed controls");
+            check(form.UpdateControls().IsCompletedSuccessfully && !form.IsReady, "closed main window cannot restart control initialization or become ready");
+        }
+        finally
+        {
+            System.Threading.SynchronizationContext.SetSynchronizationContext(previousContext);
+            for (int i = 0; i < properties.Length; i++) properties[i].SetValue(null, originals[i]);
+            if (wasReady) ready.Set(); else ready.Reset();
+        }
     }
 
     private static void CheckImportedViews(Action<bool, string> check)

@@ -10,6 +10,7 @@
 
 ### Fixed
 
+- Stop pending startup callbacks when the main window closes, preventing a crash if the app exits during initialization.
 - Use the same destination confirmation for History and Image history uploads as the main window.
 - Wait for locked, preallocated watched files to finish copying, even when their size stays unchanged for more than five seconds.
 - Poll pending watched files asynchronously so locked files do not occupy background threads while waiting.
