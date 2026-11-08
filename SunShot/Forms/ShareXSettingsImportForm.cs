@@ -53,8 +53,8 @@ namespace ShareX
                 Dock = DockStyle.Fill,
                 Margin = new Padding(0, 0, 0, 14),
                 Text = Localize(
-                    "Copy settings from a ShareX 21.0 profile. ShareX files and Windows integration remain untouched. Close ShareX before importing so its settings are up to date.",
-                    "Copiez les paramètres d’un profil ShareX 21.0. Les fichiers et l’intégration Windows de ShareX restent intacts. Fermez ShareX avant l’importation pour enregistrer ses derniers paramètres.")
+                    "Copy settings from a ShareX 21.0 or 22.0–22.4 profile. ShareX files and Windows integration remain untouched. Close ShareX before importing so its settings are up to date.",
+                    "Copiez les paramètres d’un profil ShareX 21.0 ou 22.0–22.4. Les fichiers et l’intégration Windows de ShareX restent intacts. Fermez ShareX avant l’importation pour enregistrer ses derniers paramètres.")
             };
             layout.Controls.Add(introduction, 0, 0);
             layout.SetColumnSpan(introduction, 2);
@@ -92,10 +92,10 @@ namespace ShareX
                 Text = Localize(
                     "Imports capture preferences, hotkey definitions, workflows, and upload destinations, including saved credentials. Missing hotkey or uploader files use SunShot defaults. External config paths are not followed.\r\n\r\n" +
                     "Hotkeys and uploading are disabled after import. Automatic upload, external actions, deletion, AI tasks, and watch folders are disabled. Screenshot and config paths use SunShot’s own folders. History, screenshots, PersonalPath.cfg, startup settings, and file associations are excluded.\r\n\r\n" +
-                    "Current SunShot settings are backed up under its Backup folder. The backup may contain credentials. SunShot restarts after importing. Nothing in ShareX is read until you confirm below.",
+                    "ShareX 22 themes, native recording and newer tools have limitations. You can review all reported changes before applying. Current SunShot settings are backed up under Backup; the backup may contain credentials. SunShot restarts after importing. Nothing is read until you confirm below.",
                     "Importe les préférences de capture, les raccourcis clavier, les tâches et les destinations d’envoi, y compris les identifiants enregistrés. Les fichiers de raccourcis ou de destinations absents utilisent les paramètres SunShot par défaut. Les chemins de configuration externes ne sont pas suivis.\r\n\r\n" +
                     "Les raccourcis et l’envoi sont désactivés après l’importation. L’envoi automatique, les actions externes, la suppression, les tâches IA et les dossiers surveillés sont désactivés. Les captures et les paramètres utilisent les dossiers SunShot. L’historique, les images, PersonalPath.cfg, le démarrage et les associations de fichiers sont exclus.\r\n\r\n" +
-                    "Les paramètres SunShot actuels sont sauvegardés dans son dossier Backup. La sauvegarde peut contenir des identifiants. SunShot redémarre après l’importation. Aucun fichier ShareX n’est lu avant votre confirmation.")
+                    "Les thèmes, l’enregistrement natif et les nouveaux outils de ShareX 22 ont des limites. Les changements signalés seront affichés avant l’importation. Les paramètres actuels sont sauvegardés dans Backup; la sauvegarde peut contenir des identifiants. SunShot redémarre après l’importation. Aucun fichier n’est lu avant votre confirmation.")
             };
             layout.Controls.Add(explanation, 0, 3);
             layout.SetColumnSpan(explanation, 2);
@@ -125,8 +125,8 @@ namespace ShareX
                 return;
             }
             if (MessageBox.Show(this, Localize(
-                "Read the selected ShareX profile, replace the SunShot settings, and restart SunShot? A backup of your SunShot settings will be kept.",
-                "Lire le profil ShareX sélectionné, remplacer les paramètres SunShot et redémarrer SunShot ? Une sauvegarde de vos paramètres SunShot sera conservée."),
+                "Read the selected ShareX profile and prepare an import preview? You will review the limitations before replacing any SunShot settings.",
+                "Lire le profil ShareX sélectionné et préparer un aperçu ? Vous pourrez vérifier les limites avant de remplacer les paramètres SunShot."),
                 Text, MessageBoxButtons.OKCancel, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) != DialogResult.OK) return;
 
             importButton.Enabled = false;
@@ -135,6 +135,7 @@ namespace ShareX
             try
             {
                 ShareXSettingsImportService.ImportPlan plan = ShareXSettingsImportService.Prepare(sourcePath.Text, Program.PersonalFolder);
+                if (!ConfirmPreparedImport(plan)) { importButton.Enabled = true; return; }
                 if (TaskManager.IsBusy || ScreenRecordManager.IsRecording)
                     throw new InvalidDataException(Localize("Finish recording and active tasks before importing.", "Terminez l’enregistrement et les tâches avant l’importation."));
                 watchersSuspended = Program.WatchFolderManager != null;
@@ -143,8 +144,8 @@ namespace ShareX
                 suspended = true;
                 string backup = ShareXSettingsImportService.Apply(plan);
                 string result = Localize(
-                    $"Imported ShareX {plan.SourceVersion} settings and {plan.HotkeyCount} hotkey definitions. Upload destinations: {(plan.HasUploaders ? "imported" : "defaults (file absent)")}.\r\n\r\nReview your settings first. To enable hotkeys, choose Enable hotkeys in the tray menu. To enable uploading, clear DisableUpload in Application settings > Advanced.\r\n\r\nBackup: {backup}",
-                    $"Paramètres ShareX {plan.SourceVersion} et {plan.HotkeyCount} raccourcis importés. Destinations : {(plan.HasUploaders ? "importées" : "par défaut (fichier absent)")}.\r\n\r\nVérifiez vos paramètres. Pour activer les raccourcis, choisissez Activer les raccourcis clavier dans le menu de notification. Pour activer l’envoi, décochez DisableUpload dans Paramètres de l’application > Avancé.\r\n\r\nSauvegarde : {backup}");
+                    $"Imported ShareX {plan.SourceVersion} settings and {plan.HotkeyCount} hotkey definitions ({(plan.HasHotkeys ? "imported" : "defaults, file absent")}). Upload destinations: {(plan.HasUploaders ? "imported" : "defaults (file absent)")}.\r\n\r\nReview your settings first. To enable hotkeys, choose Enable hotkeys in the tray menu. To enable uploading, clear DisableUpload in Application settings > Advanced.\r\n\r\nBackup: {backup}",
+                    $"Paramètres ShareX {plan.SourceVersion} et {plan.HotkeyCount} raccourcis ({(plan.HasHotkeys ? "importés" : "par défaut, fichier absent")}). Destinations : {(plan.HasUploaders ? "importées" : "par défaut (fichier absent)")}.\r\n\r\nVérifiez vos paramètres. Pour activer les raccourcis, choisissez Activer les raccourcis clavier dans le menu de notification. Pour activer l’envoi, décochez DisableUpload dans Paramètres de l’application > Avancé.\r\n\r\nSauvegarde : {backup}");
                 if (plan.UnreadableCredentials > 0)
                     result += Localize($"\r\n\r\n{plan.UnreadableCredentials} credentials could not be decrypted for this Windows account and were cleared. Reconnect those accounts.",
                         $"\r\n\r\n{plan.UnreadableCredentials} identifiants n’ont pas pu être déchiffrés pour ce compte Windows et ont été effacés. Reconnectez ces comptes.");
@@ -171,6 +172,39 @@ namespace ShareX
                 if (needsRecovery) { Close(); Application.Exit(); }
                 else importButton.Enabled = true;
             }
+        }
+
+        private bool ConfirmPreparedImport(ShareXSettingsImportService.ImportPlan plan)
+        {
+            using Form review = new Form {
+                Text = Localize("Review ShareX import", "Vérifier l’importation ShareX"),
+                StartPosition = FormStartPosition.CenterParent, Font = Font,
+                ClientSize = new Size(740, 500), MinimumSize = new Size(560, 400),
+                MinimizeBox = false, MaximizeBox = false, ShowInTaskbar = false
+            };
+            string summary = Localize(
+                $"ShareX {plan.SourceVersion}; {plan.HotkeyCount} hotkey definitions ({(plan.HasHotkeys ? "imported" : "defaults, file absent")}). Upload destinations: {(plan.HasUploaders ? "imported" : "defaults (file absent)")}.\r\n\r\nHotkeys, uploads, automatic upload/actions/deletion/AI and watch folders will be disabled. SunShot paths will be used. A backup will be kept.\r\n\r\n",
+                $"ShareX {plan.SourceVersion}; {plan.HotkeyCount} raccourcis ({(plan.HasHotkeys ? "importés" : "par défaut, fichier absent")}). Destinations : {(plan.HasUploaders ? "importées" : "par défaut (fichier absent)")}.\r\n\r\nLes raccourcis, l’envoi, les actions automatiques, la suppression, l’IA et les dossiers surveillés seront désactivés. Les dossiers SunShot seront utilisés. Une sauvegarde sera conservée.\r\n\r\n");
+            if (plan.UnreadableCredentials > 0) summary += Localize(
+                $"{plan.UnreadableCredentials} unreadable credentials will be cleared. Reconnect those accounts.\r\n\r\n",
+                $"{plan.UnreadableCredentials} identifiants illisibles seront effacés. Reconnectez ces comptes.\r\n\r\n");
+            summary += plan.Warnings.Count == 0 ? Localize("No additional compatibility limitations reported.", "Aucune autre limite de compatibilité signalée.") :
+                Localize($"Compatibility report ({plan.Warnings.Count} notices):\r\n", $"Rapport de compatibilité ({plan.Warnings.Count} avis; détails techniques en anglais) :\r\n") + string.Join("\r\n\r\n", plan.Warnings);
+            TextBox report = new TextBox {
+                Dock = DockStyle.Fill, Multiline = true, ReadOnly = true,
+                ScrollBars = ScrollBars.Vertical, Text = summary,
+                AccessibleName = Localize("Import compatibility report", "Rapport de compatibilité")
+            };
+            FlowLayoutPanel buttons = new FlowLayoutPanel { Dock = DockStyle.Bottom, AutoSize = true, Padding = new Padding(8), FlowDirection = FlowDirection.RightToLeft };
+            Button cancel = new Button { Text = Localize("Cancel", "Annuler"), AutoSize = true, DialogResult = DialogResult.Cancel };
+            Button apply = new Button { Text = Localize("Import and restart", "Importer et redémarrer"), AutoSize = true, DialogResult = DialogResult.OK };
+            buttons.Controls.Add(cancel);
+            buttons.Controls.Add(apply);
+            review.Controls.Add(report);
+            review.Controls.Add(buttons);
+            review.CancelButton = cancel;
+            review.ActiveControl = cancel;
+            return review.ShowDialog(this) == DialogResult.OK;
         }
     }
 }

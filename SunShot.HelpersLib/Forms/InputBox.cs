@@ -40,7 +40,7 @@ namespace ShareX.HelpersLib
 
             InputText = inputText;
 
-            Text = "ShareX - " + title;
+            Text = ShareXResources.Name + " - " + title;
             if (!string.IsNullOrEmpty(InputText)) txtInputText.Text = InputText;
             if (!string.IsNullOrEmpty(okText)) btnOK.Text = okText;
             if (!string.IsNullOrEmpty(cancelText)) btnCancel.Text = cancelText;

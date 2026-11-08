@@ -19,8 +19,15 @@ internal static class Checks
  static void Check(bool value, string label) { if (!value) throw new Exception(label); Console.WriteLine("PASS " + label); checks++; }
  static void Reject(Action action, string label) { bool rejected = false; try { action(); } catch { rejected = true; } Check(rejected, label); }
  [STAThread]
- static void Main()
+ static void Main(string[] args)
  {
+   if(args.Contains("--write-baseline"))
+   {
+      Directory.CreateDirectory(args[1]);
+      foreach(var item in new (string,object)[]{("ApplicationConfig.json",new ApplicationConfig()),("HotkeysConfig.json",new HotkeysConfig()),("UploadersConfig.json",new ShareX.UploadersLib.UploadersConfig())})
+         File.WriteAllText(Path.Combine(args[1],item.Item1),JsonConvert.SerializeObject(item.Item2,new JsonSerializerSettings{ContractResolver=new WritablePropertiesOnlyResolver(),Converters={new Newtonsoft.Json.Converters.StringEnumConverter()},Formatting=Formatting.Indented}));
+      return;
+   }
    string root = Path.Combine(Path.GetTempPath(), "sunshot-core-checks-" + Guid.NewGuid().ToString("N"));
    string source=Path.Combine(root,"ShareX"), destination=Path.Combine(root,"SunShot");
    Directory.CreateDirectory(source); Directory.CreateDirectory(destination);
@@ -60,15 +67,23 @@ internal static class Checks
    Check((string)JObject.Parse(Encoding.UTF8.GetString(plan.Files["HotkeysConfig.json"]))["Hotkeys"][0]["TaskSettings"]["Description"]=="my workflow", "workflow description preserved");
    JObject creds=JObject.Parse(Encoding.UTF8.GetString(plan.Files["UploadersConfig.json"]));
    Check((string)creds["VgymeUserKey"]==credential && (string)creds["Paste_eeUserKey"]=="" && plan.UnreadableCredentials==1, "same-user encrypted credentials retained; unreadable credentials cleared");
+   Check(plan.HasHotkeys && plan.Warnings.Any(x=>x.Contains("CustomHotkeysConfigPath")) && plan.Warnings.Any(x=>x.Contains("CustomUploadersConfigPath")), "external paths skipped with explicit per-profile warnings");
+   Check(clean["QuickTaskPresets"].Count(x=> (string)x["AfterCaptureTasks"] == "None") == 1 &&
+      clean["QuickTaskPresets"].All(x=>x["Name"].Type==JTokenType.Null || !((string)x["Name"]).Contains("Upload")), "sanitized presets retain only intentional separator and no misleading upload names");
    string backup=ImportService.Apply(plan);
    Check(File.ReadAllText(Path.Combine(backup,"ApplicationConfig.json.original"))=="original-app", "existing SunShot profile backed up");
    Check(File.Exists(Path.Combine(backup,"HotkeysConfig.json.absent")) && !ImportService.HasPendingImport(destination), "absent targets tracked and successful transaction finished");
    Check(File.ReadAllText(Path.Combine(destination,"History.db"))=="original-history" && !File.Exists(Path.Combine(destination,"PersonalPath.cfg")) && !File.Exists(Path.Combine(destination,"History.json")), "history and personal path files untouched");
    Check(originals.All(x=>File.ReadAllBytes(Path.Combine(source,x.Key)).SequenceEqual(x.Value)), "all ShareX source files byte-identical");
+   var loadedUploaders=ShareX.UploadersLib.UploadersConfig.Load(Path.Combine(destination,"UploadersConfig.json"),fallbackSupport:false);
+   var loadedApp=ApplicationConfig.Load(Path.Combine(destination,"ApplicationConfig.json"),fallbackSupport:false);
+   var loadedHotkeys=HotkeysConfig.Load(Path.Combine(destination,"HotkeysConfig.json"),fallbackSupport:false);
+   Check(loadedUploaders.VgymeUserKey=="synthetic-secret" && loadedUploaders.Paste_eeUserKey=="" && loadedApp.DisableUpload && loadedApp.DisableHotkeys &&
+      loadedHotkeys.Hotkeys.Count==1 && loadedHotkeys.Hotkeys[0].TaskSettings.Description=="my workflow", "imported files roundtrip through real SettingsBase.Load and DPAPI credential decryption");
    Reject(()=>ImportService.Prepare(source,source),"same folder rejected");
    Reject(()=>ImportService.Prepare(source,Path.Combine(source,"nested")),"nested destination rejected");
    string good=File.ReadAllText(appPath);
-   File.WriteAllText(appPath,good.Replace("21.0.0","22.0.0")); Reject(()=>ImportService.Prepare(source,destination),"future schema rejected");
+   File.WriteAllText(appPath,good.Replace("21.0.0","22.5.0")); Reject(()=>ImportService.Prepare(source,destination),"future schema rejected");
    File.WriteAllText(appPath,good.Replace("21.0.0","20.0.0")); Reject(()=>ImportService.Prepare(source,destination),"older schema rejected");
    File.WriteAllText(appPath,"{\"ApplicationVersion\":\"21.0.0\",\"DefaultTaskSettings\":{},\"ApplicationVersion\":\"21.0.0\"}"); Reject(()=>ImportService.Prepare(source,destination),"duplicate JSON properties rejected");
    File.WriteAllText(appPath,good+"{}"); Reject(()=>ImportService.Prepare(source,destination),"trailing JSON rejected");
@@ -93,7 +108,15 @@ internal static class Checks
    // No external files are followed when optional config files are absent.
    File.Delete(Path.Combine(source,"HotkeysConfig.json")); File.Delete(Path.Combine(source,"UploadersConfig.json"));
    var missing=ImportService.Prepare(source,destination);
-   Check(!missing.HasUploaders && missing.HotkeyCount>0 && missing.Files.Count==3,"missing optional files use isolated defaults");
+   Check(!missing.HasUploaders && !missing.HasHotkeys && missing.HotkeyCount>0 && missing.Files.Count==3,"missing optional files accurately reported as isolated defaults");
+   JObject ffmpegFixture=JObject.Parse(good);
+   ffmpegFixture["DefaultTaskSettings"]["CaptureSettings"]=new JObject{["FFmpegOptions"]=new JObject{["OverrideCLIPath"]=true,["CLIPath"]=Path.Combine(source,"Tools","ffmpeg.exe")}};
+   File.WriteAllText(appPath,ffmpegFixture.ToString());
+   var isolatedRecorder=ImportService.Prepare(source,destination);
+   JObject isolatedApp=JObject.Parse(Encoding.UTF8.GetString(isolatedRecorder.Files["ApplicationConfig.json"]));
+   Check(!(bool)isolatedApp["DefaultTaskSettings"]["CaptureSettings"]["FFmpegOptions"]["OverrideCLIPath"] &&
+      (string)isolatedApp["DefaultTaskSettings"]["CaptureSettings"]["FFmpegOptions"]["CLIPath"]=="" && isolatedRecorder.Warnings.Any(x=>x.Contains("FFmpeg override")), "source profile FFmpeg override cleared and reported");
+   File.WriteAllText(appPath,good);
 
    File.WriteAllText(appPath,good.Replace("\"ActionsToolbarRunAtStartup\": true", "\"Themes\": null,\"ActionsToolbarRunAtStartup\": true"));
    Reject(()=>ImportService.Prepare(source,destination),"null required containers rejected");
@@ -143,6 +166,8 @@ internal static class Checks
       Check(process.ExitCode==0,"synthetic Windows junction fixture created");
    }
    Reject(()=>ImportService.Prepare(fixtureJunction,destination),"Windows junction profile rejected");
+   ShareX22Checks.Run(root, Check, Reject);
+   if(args.Contains("--import-only")) { Console.WriteLine("CHECKS "+checks+"; synthetic files: "+root); return; }
    Assembly main=typeof(ApplicationConfig).Assembly;
    var flags=BindingFlags.Static|BindingFlags.Public|BindingFlags.NonPublic;
    Type program=main.GetType("ShareX.Program");
@@ -241,6 +266,8 @@ internal static class ImportService
         public int HotkeyCount => Get<int>("HotkeyCount");
         public int UnreadableCredentials => Get<int>("UnreadableCredentials");
         public bool HasUploaders => Get<bool>("HasUploaders");
+        public bool HasHotkeys => Get<bool>("HasHotkeys");
+        public List<string> Warnings => Get<List<string>>("Warnings");
     }
     private static object Call(string method,params object[] args)
     {

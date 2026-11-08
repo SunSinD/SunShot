@@ -213,6 +213,11 @@ namespace ShareX
                     FileDestination = defaultTaskSettings.FileDestination;
                     URLShortenerDestination = defaultTaskSettings.URLShortenerDestination;
                     URLSharingServiceDestination = defaultTaskSettings.URLSharingServiceDestination;
+                    if (!OverrideCustomUploader && defaultTaskSettings.OverrideCustomUploader)
+                    {
+                        OverrideCustomUploader = true;
+                        CustomUploaderIndex = defaultTaskSettings.CustomUploaderIndex;
+                    }
                 }
 
                 if (UseDefaultGeneralSettings)

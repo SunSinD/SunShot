@@ -264,7 +264,7 @@ namespace ShareX.ScreenCaptureLib
             switch (Status)
             {
                 case ScreenRecordingStatus.Working:
-                    string trayTextWorking = "ShareX - " + Resources.ScreenRecordForm_StartRecording_Click_tray_icon_to_stop_recording_;
+                    string trayTextWorking = ShareXResources.Name + " - " + Resources.ScreenRecordForm_StartRecording_Click_tray_icon_to_stop_recording_;
                     niTray.Text = trayTextWorking.Truncate(63);
                     niTray.Icon = Resources.control_record.ToIcon();
                     btnStart.Text = Resources.ScreenRecordForm_Stop;
@@ -275,12 +275,12 @@ namespace ShareX.ScreenCaptureLib
                 case ScreenRecordingStatus.Paused:
                     if (Status == ScreenRecordingStatus.Paused)
                     {
-                        string trayTextWaiting = "ShareX - " + Resources.ScreenRecordForm_StartRecording_Click_tray_icon_to_stop_recording_;
+                        string trayTextWaiting = ShareXResources.Name + " - " + Resources.ScreenRecordForm_StartRecording_Click_tray_icon_to_stop_recording_;
                         niTray.Text = trayTextWaiting.Truncate(63);
                     }
                     else
                     {
-                        string trayTextBeforeStart = "ShareX - " + Resources.ScreenRecordForm_StartRecording_Click_tray_icon_to_start_recording_;
+                        string trayTextBeforeStart = ShareXResources.Name + " - " + Resources.ScreenRecordForm_StartRecording_Click_tray_icon_to_start_recording_;
                         niTray.Text = trayTextBeforeStart.Truncate(63);
                     }
                     niTray.Icon = Resources.control_record_yellow.ToIcon();
@@ -308,7 +308,7 @@ namespace ShareX.ScreenCaptureLib
                 switch (state)
                 {
                     case ScreenRecordState.Waiting:
-                        string trayTextWaiting = "ShareX - " + Resources.ScreenRecordForm_StartRecording_Waiting___;
+                        string trayTextWaiting = ShareXResources.Name + " - " + Resources.ScreenRecordForm_StartRecording_Waiting___;
                         niTray.Text = trayTextWaiting.Truncate(63);
                         niTray.Icon = Resources.control_record_yellow.ToIcon();
                         cmsMain.Enabled = false;
@@ -335,7 +335,7 @@ namespace ShareX.ScreenCaptureLib
                     case ScreenRecordState.Encoding:
                         Hide();
                         cmsMain.Enabled = false;
-                        string trayTextAfterStop = "ShareX - " + Resources.ScreenRecordForm_StartRecording_Encoding___;
+                        string trayTextAfterStop = ShareXResources.Name + " - " + Resources.ScreenRecordForm_StartRecording_Encoding___;
                         niTray.Text = trayTextAfterStop.Truncate(63);
                         niTray.Icon = Resources.camcorder__pencil.ToIcon();
                         break;
@@ -345,7 +345,7 @@ namespace ShareX.ScreenCaptureLib
 
         public void ChangeStateProgress(int progress)
         {
-            niTray.Text = $"{ShareXResources.Name} - {Resources.ScreenRecordForm_StartRecording_Encoding___} {progress}%";
+            niTray.Text = $"{ShareXResources.Name} - {Resources.ScreenRecordForm_StartRecording_Encoding___} {progress}%".Truncate(63);
 
             if (niTray.Visible && lastIconStatus != progress)
             {

@@ -10,6 +10,8 @@ dotnet run --project tests/SunShot.CoreChecks/SunShot.CoreChecks.csproj -c Relea
 ./build/Package.ps1
 ```
 
+Packaging requires a clean, committed checkout so the source ZIP describes the application being built.
+
 Use an isolated portable copy for manual checks. Test captures against a synthetic window rather than private desktop content. Keep uploads disabled unless testing against a local receiver. Do not use a real ShareX profile for destructive or failure-injection tests.
 
 Before a release, check:
@@ -35,3 +37,13 @@ Hardware encoders, every upload provider, multi-monitor HDR/DPI combinations, sc
 - Recording a synthetic window region produced an H.264 MP4 at 580 × 290 and 30 fps. The visible pause, resume, and stop controls worked, the timer stayed still while paused, and FFmpeg decoded both completed recordings without errors. The legacy editor's Save as dialog was not verified by automation.
 - A real import of a synthetic ShareX 21.0 profile displayed the result, restarted the portable app, preserved the source hash, created a backup, removed its journal, and loaded the expected local capture tasks with uploads, hotkeys, and watch folders disabled. The tray menu opened and offered Enable hotkeys.
 - CoreChecks passed 60 checks using production import/update/settings code and synthetic profiles, including complete serialized ShareX profiles, image-effect type checks, source immutability, rollback, locked files, malformed settings, Windows junctions, English defaults, and queued saves. Symbolic-link creation was skipped because the test token lacked that privilege.
+
+## 0.1.1 candidate checks
+
+- Release x64 CoreChecks passed 359 checks, including the complete existing suite and ShareX 22.0 through 22.4 conversion checks. Symbolic-link creation was skipped for token permissions; Windows junction rejection passed. The original importer-only subset passed 276 checks before the final runtime cases were added. The full 359-check run includes 57 checks of blocked default and inherited tasks, actual custom-uploader selection and the production upload resolver with consent canceled before any network access. This includes workflows that have their own destinations but inherit filters from a blocked default.
+- Regression passed 33 assertions with the pinned valid FFmpeg archive, including the new locked, preallocated copy scenario.
+- Packaging cleans Release outputs before publishing because Avalonia can reuse older PDB files when rewriting editor assemblies. The privacy gate rejects leaked build paths before archives are created.
+- The standalone editor's Debug build passed after updating its developer-tools initialization. Release builds passed, and the dependency audit reported no known vulnerable packages at check time.
+- A separate temporary harness used the actual import and review forms in English and French. Labels and review buttons fit at the default size, the compatibility report was read-only with vertical scrolling, and Cancel left the destination uncreated. These checks used synthetic settings and did not apply an import.
+- Read-only preparation of a preserved ShareX 22.4 profile succeeded with three hotkey definitions. All inspected source JSON hashes stayed unchanged, and no destination was created. That profile was not applied to the user's installed SunShot.
+- The checked-in 22.x fixtures are synthetic JSON with property and enum inventories traced to each upstream release commit. They are not runtime exports from upstream ShareX. Real provider logins, every nested editor option and all combinations of 22.x preferences still need wider testing.

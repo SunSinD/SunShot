@@ -11,6 +11,12 @@ Set-StrictMode -Version Latest
 $repoRoot = Split-Path $PSScriptRoot -Parent
 Add-Type -AssemblyName System.IO.Compression, System.IO.Compression.FileSystem
 
+function Assert-CleanSource {
+    $changes = @(& $GitPath -C $repoRoot status --porcelain --untracked-files=normal)
+    if ($LASTEXITCODE -ne 0) { throw 'Could not check the source tree.' }
+    if ($changes.Count -ne 0) { throw 'Commit source changes before packaging so the source archive matches the application.' }
+}
+
 function New-ZipArchive([string]$Path, [string]$Root, [string[]]$Files, [string]$Prefix) {
     if (Test-Path -LiteralPath $Path) { Remove-Item -LiteralPath $Path }
     $archive = [IO.Compression.ZipFile]::Open($Path, [IO.Compression.ZipArchiveMode]::Create)
@@ -33,6 +39,9 @@ $OutputPath = [IO.Path]::GetFullPath($OutputPath)
 [xml]$props = Get-Content (Join-Path $repoRoot 'Directory.build.props')
 $version = [string]$props.Project.PropertyGroup[0].Version
 if ($version -notmatch '^\d+\.\d+\.\d+$') { throw 'Invalid app version.' }
+Assert-CleanSource
+$sourceCommit = & $GitPath -C $repoRoot rev-parse --verify HEAD
+if ($LASTEXITCODE -ne 0) { throw 'Could not identify the source commit.' }
 
 if (!$IsccPath) {
     $compiler = Get-Command ISCC.exe -ErrorAction SilentlyContinue
@@ -53,13 +62,19 @@ foreach ($stale in @('SHA256SUMS.txt', "SunShot-$version-setup-x64.exe", "SunSho
 New-Item -ItemType Directory -Force -Path $stage | Out-Null
 Push-Location $repoRoot
 try {
-    foreach ($project in @('SunShot/ShareX.csproj', 'SunShot.ImageEditor.App/ShareX.ImageEditor.App.csproj', 'SunShot.NativeMessagingHost/ShareX.NativeMessagingHost.csproj')) {
+    $projects = @('SunShot/ShareX.csproj', 'SunShot.ImageEditor.App/ShareX.ImageEditor.App.csproj', 'SunShot.NativeMessagingHost/ShareX.NativeMessagingHost.csproj')
+    # Avalonia can reuse existing PDBs while rewriting XAML assemblies, even when symbols are disabled.
+    foreach ($project in $projects) {
+        & $DotnetPath clean $project -c Release -p:Platform=x64 --verbosity quiet
+        if ($LASTEXITCODE -ne 0) { throw "Clean failed: $project" }
+    }
+    foreach ($project in $projects) {
         & $DotnetPath publish $project -c Release -p:Platform=x64 --self-contained true -p:DebugType=None -p:DebugSymbols=false --source https://api.nuget.org/v3/index.json -o $stage
         if ($LASTEXITCODE -ne 0) { throw "Publish failed: $project" }
     }
     $privatePaths = @($repoRoot, [Environment]::GetFolderPath('UserProfile')) | Where-Object { $_ }
-    $ownAssemblies = [IO.Directory]::EnumerateFiles($stage, '*.dll', [IO.SearchOption]::AllDirectories) | Where-Object {
-        [IO.Path]::GetFileName($_) -match '^(SunShot|ShareX[._]).*\.dll$'
+    $ownAssemblies = [IO.Directory]::EnumerateFiles($stage, '*', [IO.SearchOption]::AllDirectories) | Where-Object {
+        [IO.Path]::GetFileName($_) -match '^(SunShot|ShareX[._]).*\.(dll|exe)$'
     }
     foreach ($assembly in $ownAssemblies) {
         $bytes = [IO.File]::ReadAllBytes($assembly)
@@ -101,20 +116,12 @@ try {
     [IO.File]::WriteAllText((Join-Path $stage 'Portable'), '')
     $stageFiles = @([IO.Directory]::EnumerateFiles($stage, '*', [IO.SearchOption]::AllDirectories) | ForEach-Object { $_.Substring($stage.Length + 1) })
     New-ZipArchive (Join-Path $OutputPath "SunShot-$version-portable-x64.zip") $stage $stageFiles ''
-    $outputRelative = ([IO.Path]::GetFullPath($OutputPath).TrimEnd('\') + '\').Replace('\', '/')
-    $repoPrefix = ([IO.Path]::GetFullPath($repoRoot).TrimEnd('\') + '\').Replace('\', '/')
-    if ($outputRelative.StartsWith($repoPrefix, [StringComparison]::OrdinalIgnoreCase)) { $outputRelative = $outputRelative.Substring($repoPrefix.Length) } else { $outputRelative = $null }
-    $consoleEncoding = [Console]::OutputEncoding
-    try {
-        [Console]::OutputEncoding = [Text.UTF8Encoding]::new($false)
-        $sourceFiles = @(& $GitPath -C $repoRoot ls-files -z --cached --others --exclude-standard)
-        if ($LASTEXITCODE -ne 0) { throw 'Could not list source files.' }
-    }
-    finally { [Console]::OutputEncoding = $consoleEncoding }
-    $sourceFiles = @(($sourceFiles -join '') -split "`0" | Where-Object {
-        $_ -and ($null -eq $outputRelative -or !$_.StartsWith($outputRelative, [StringComparison]::OrdinalIgnoreCase)) -and (Test-Path -LiteralPath (Join-Path $repoRoot $_) -PathType Leaf)
-    })
-    New-ZipArchive (Join-Path $OutputPath "SunShot-$version-source.zip") $repoRoot $sourceFiles "SunShot-$version/"
+    Assert-CleanSource
+    $currentCommit = & $GitPath -C $repoRoot rev-parse --verify HEAD
+    if ($LASTEXITCODE -ne 0 -or $currentCommit -ne $sourceCommit) { throw 'The source commit changed during packaging.' }
+    $sourceZip = Join-Path $OutputPath "SunShot-$version-source.zip"
+    & $GitPath -C $repoRoot archive --format=zip "--prefix=SunShot-$version/" "--output=$sourceZip" $sourceCommit
+    if ($LASTEXITCODE -ne 0) { throw 'Could not create the committed source archive.' }
     $assets = @("SunShot-$version-setup-x64.exe", "SunShot-$version-portable-x64.zip", "SunShot-$version-source.zip")
     $sums = $assets | ForEach-Object { '{0}  {1}' -f (Get-FileHash -LiteralPath (Join-Path $OutputPath $_) -Algorithm SHA256).Hash.ToLowerInvariant(), $_ }
     [IO.File]::WriteAllText((Join-Path $OutputPath 'SHA256SUMS.txt'), (($sums -join "`n") + "`n"), [Text.UTF8Encoding]::new($false))

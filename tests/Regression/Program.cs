@@ -12,7 +12,7 @@ static class Regression
         Console.WriteLine("PASS: " + name);
     }
 
-    static async Task Watch(string root, bool slow, bool empty)
+    static async Task Watch(string root, bool slow, bool empty, bool preallocated = false)
     {
         string directory = Path.Combine(root, Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(directory);
@@ -31,6 +31,11 @@ static class Regression
         watcher.Enable();
         await using (var writer = new FileStream(Path.Combine(directory, "test.bin"), FileMode.Create, FileAccess.Write, FileShare.Read))
         {
+            if (preallocated)
+            {
+                writer.SetLength(4096);
+                await Task.Delay(6500);
+            }
             for (int i = 0; i < (slow ? 32 : empty ? 0 : 1); i++)
             {
                 await writer.WriteAsync(new byte[4096]);
@@ -124,6 +129,7 @@ static class Regression
             FFmpeg(root, args.FirstOrDefault());
             await Watch(root, false, false);
             await Watch(root, true, false);
+            await Watch(root, false, false, true);
             await Watch(root, false, true);
             await PendingCallback(root, false);
             await PendingCallback(root, true);

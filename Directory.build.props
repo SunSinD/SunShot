@@ -3,7 +3,7 @@
     <Company>SunSinD</Company>
     <Product>SunShot</Product>
     <Copyright>Copyright (c) 2007-2026 ShareX Team</Copyright>
-    <Version>0.1.0</Version>
+    <Version>0.1.1</Version>
     <EmbeddedResourceUseDependentUponConvention>true</EmbeddedResourceUseDependentUponConvention>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <AppendPlatformToOutputPath>false</AppendPlatformToOutputPath>

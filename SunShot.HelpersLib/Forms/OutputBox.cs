@@ -38,7 +38,7 @@ namespace ShareX.HelpersLib
             rtbText.AddContextMenu();
             ShareXResources.ApplyTheme(this, true);
 
-            Text = "ShareX - " + title;
+            Text = ShareXResources.Name + " - " + title;
             rtbText.Text = text;
             ScrollToEnd = scrollToEnd;
         }

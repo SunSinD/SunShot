@@ -97,10 +97,11 @@ namespace ShareX
                     return false;
                 }
 
-                // Only give up after the file size stopped changing for a while, so files that take long to write are not skipped.
+                // Preallocated copies may keep the same size while the writer holds a lock.
                 long observedSize = FileHelpers.GetFileSize(path);
+                bool locked = FileHelpers.IsFileLocked(path);
 
-                if (observedSize != lastObservedSize)
+                if (observedSize != lastObservedSize || (locked && File.Exists(path)))
                 {
                     lastObservedSize = observedSize;
                     idleTimer.Restart();
@@ -111,7 +112,7 @@ namespace ShareX
                     return false;
                 }
 
-                if (!FileHelpers.IsFileLocked(path))
+                if (!locked)
                 {
                     long currentSize = FileHelpers.GetFileSize(path);
 

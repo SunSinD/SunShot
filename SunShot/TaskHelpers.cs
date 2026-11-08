@@ -847,7 +847,7 @@ namespace ShareX
         public static void OpenHistory()
         {
             HistoryForm historyForm = new HistoryForm(Program.HistoryManager, Program.Settings.HistorySettings,
-                filePath => UploadManager.UploadFile(filePath),
+                filePath => Program.MainForm.UploadFileWithConfirmation(filePath),
                 filePath => AnnotateImageFromFile(filePath),
                 filePath => PinToScreen(filePath));
 
@@ -857,7 +857,7 @@ namespace ShareX
         public static void OpenImageHistory()
         {
             ImageHistoryForm imageHistoryForm = new ImageHistoryForm(Program.HistoryManager, Program.Settings.ImageHistorySettings,
-                filePath => UploadManager.UploadFile(filePath),
+                filePath => Program.MainForm.UploadFileWithConfirmation(filePath),
                 filePath => AnnotateImageFromFile(filePath),
                 filePath => PinToScreen(filePath));
 

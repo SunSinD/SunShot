@@ -135,7 +135,9 @@ namespace ShareX
             ["DestinationNotSetUp"] = new[] { "The upload destination \"{0}\" is not set up yet, so nothing was uploaded.\r\n\r\nOpen destination settings now?",
                 "La destination de téléversement « {0} » n'est pas encore configurée, donc rien n'a été téléversé.\r\n\r\nOuvrir les paramètres de destination maintenant ?" },
             ["DontAskSession"] = new[] { "Don't ask again until SunShot is restarted", "Ne plus demander jusqu'au redémarrage de SunShot" },
-            ["SaveFailed"] = new[] { "The file could not be saved.", "Le fichier n'a pas pu être enregistré." }
+            ["SaveFailed"] = new[] { "The file could not be saved.", "Le fichier n'a pas pu être enregistré." },
+            ["BackupExported"] = new[] { "Backup saved. This .sxb file is a ZIP archive. SunShot does not restore it automatically. To restore it manually, close SunShot, keep a copy of your current profile, then extract the backup files into your SunShot profile folder. The ShareX importer does not accept .sxb files.",
+                "Sauvegarde enregistrée. Ce fichier .sxb est une archive ZIP. SunShot ne la restaure pas automatiquement. Pour la restaurer manuellement, fermez SunShot, gardez une copie de votre profil actuel, puis extrayez les fichiers dans votre dossier de profil SunShot. L'importateur ShareX n'accepte pas les fichiers .sxb." }
         };
     }
 }

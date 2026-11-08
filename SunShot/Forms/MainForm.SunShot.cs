@@ -284,9 +284,14 @@ namespace ShareX
         // Toolbar, context-menu and Ctrl+U uploads of a selected file share the same confirmation.
         private void UploadSelectedWithConfirmation()
         {
-            if (!uim.IsItemSelected || !uim.SelectedItem.IsFileExist || !TaskHelpers.IsUploadAllowed()) return;
+            if (!uim.IsItemSelected || !uim.SelectedItem.IsFileExist) return;
 
-            string filePath = uim.SelectedItem.Info.FilePath;
+            UploadFileWithConfirmation(uim.SelectedItem.Info.FilePath);
+        }
+
+        internal void UploadFileWithConfirmation(string filePath)
+        {
+            if (!File.Exists(filePath) || !TaskHelpers.IsUploadAllowed()) return;
 
             WorkerTask task = WorkerTask.CreateFileUploaderTask(filePath, TaskSettings.GetDefaultTaskSettings());
             if (task == null) return;

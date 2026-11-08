@@ -6,7 +6,7 @@ Windows 11 and the .NET 10 SDK are required. From the repository root:
 dotnet run --project tests/SunShot.CoreChecks/SunShot.CoreChecks.csproj -c Release -p:Platform=x64 -p:RestoreSources=https://api.nuget.org/v3/index.json
 ```
 
-The regression harness also checks upload consent, private temp cleanup, native SQLite, watched files, and FFmpeg download validation:
+The regression harness also checks upload consent, private temp cleanup, native SQLite, watched files (including slow writes and locked preallocated copies), and FFmpeg download validation:
 
 ```powershell
 dotnet run --project tests/Regression/Regression.csproj -c Release -p:Platform=x64 -p:RestoreSources=https://api.nuget.org/v3/index.json

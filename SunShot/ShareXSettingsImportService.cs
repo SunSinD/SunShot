@@ -35,8 +35,10 @@ namespace ShareX
             internal string Destination;
             public int HotkeyCount { get; internal set; }
             public bool HasUploaders { get; internal set; }
+            public bool HasHotkeys { get; internal set; }
             public int UnreadableCredentials { get; internal set; }
             public string SourceVersion { get; internal set; }
+            public List<string> Warnings { get; } = new List<string>();
         }
 
         private static JsonSerializer CreateSerializer() => new JsonSerializer
@@ -63,17 +65,23 @@ namespace ShareX
             JObject appJson = ReadConfig(Path.Combine(source, ConfigNames[0]));
             if (appJson["DefaultTaskSettings"] is not JObject)
                 throw new InvalidDataException("ApplicationConfig.json must contain ShareX task settings.");
-            ApplicationConfig app = Deserialize<ApplicationConfig>(appJson);
-            ValidateContainers(appJson, JObject.FromObject(new ApplicationConfig(), CreateSerializer()));
-            ImportPlan plan = new ImportPlan { Destination = destination, SourceVersion = app.ApplicationVersion };
+            ImportPlan plan = new ImportPlan { Destination = destination, SourceVersion = (string)appJson["ApplicationVersion"] };
+            foreach (string field in new[] { "CustomHotkeysConfigPath", "CustomUploadersConfigPath" })
+                if (appJson[field]?.Type == JTokenType.String && !string.IsNullOrWhiteSpace((string)appJson[field]))
+                    plan.Warnings.Add(field + ": external config path was not followed. Only files in the selected profile folder are imported; an absent file uses SunShot defaults.");
+            ShareX22SettingsMigration migration = new ShareX22SettingsMigration(plan.Warnings, CreateSerializer());
+            migration.Convert(appJson, typeof(ApplicationConfig), ConfigNames[0]);
 
             string hotkeyPath = Path.Combine(source, ConfigNames[1]);
-            HotkeysConfig hotkeys = new HotkeysConfig();
+            JObject hotkeyJson = null;
             if (File.Exists(hotkeyPath))
             {
                 JObject json = ReadConfig(hotkeyPath);
                 if (json["Hotkeys"] is not JArray) throw new InvalidDataException("HotkeysConfig.json must contain a Hotkeys list.");
-                hotkeys = Deserialize<HotkeysConfig>(json);
+                CheckFileVersion(json, plan, ConfigNames[1]);
+                migration.Convert(json, typeof(HotkeysConfig), ConfigNames[1]);
+                hotkeyJson = json;
+                plan.HasHotkeys = true;
                 foreach (JObject entry in ((JArray)json["Hotkeys"]).OfType<JObject>())
                 {
                     if (entry["TaskSettings"] is not JObject task) continue;
@@ -86,12 +94,8 @@ namespace ShareX
                     ValidateContainers(task, JObject.FromObject(new TaskSettings(), CreateSerializer()));
                 }
             }
-            if (hotkeys.Hotkeys == null || hotkeys.Hotkeys.Any(x => x?.TaskSettings == null || x.HotkeyInfo == null))
-                throw new InvalidDataException("The hotkey configuration contains an incomplete entry.");
-            plan.HotkeyCount = hotkeys.Hotkeys.Count;
-
             string uploaderName = ConfigNames[2];
-            if (app.UseMachineSpecificUploadersConfig)
+            if ((bool?)appJson["UseMachineSpecificUploadersConfig"] == true)
             {
                 string machineName = FileHelpers.SanitizeFileName(Environment.MachineName.ToLowerInvariant());
                 string machinePath = Path.Combine(source, $"UploadersConfig-{machineName}.json");
@@ -102,7 +106,9 @@ namespace ShareX
             if (File.Exists(uploaderPath))
             {
                 JObject json = ReadConfig(uploaderPath);
-                if (!json.Properties().Any(x => x.Name != "ApplicationVersion" &&
+                CheckFileVersion(json, plan, uploaderName);
+                bool version22 = Version.Parse((string)json["ApplicationVersion"]).Major == 22;
+                if (!version22 && !json.Properties().Any(x => x.Name != "ApplicationVersion" &&
                     typeof(UploadersConfig).GetProperty(x.Name) != null))
                     throw new InvalidDataException("UploadersConfig.json does not contain recognized uploader settings.");
                 foreach (JValue value in json.Descendants().OfType<JValue>().Where(x => x.Type == JTokenType.String))
@@ -115,11 +121,25 @@ namespace ShareX
                         catch { value.Value = ""; plan.UnreadableCredentials++; }
                     }
                 }
+                migration.Convert(json, typeof(UploadersConfig), uploaderName);
                 uploaders = Deserialize<UploadersConfig>(json);
                 ValidateContainers(json, JObject.FromObject(new UploadersConfig(), CreateSerializer()));
                 plan.HasUploaders = true;
             }
 
+            migration.Finish(uploaders);
+            ApplicationConfig app = Deserialize<ApplicationConfig>(appJson);
+            ValidateContainers(appJson, JObject.FromObject(new ApplicationConfig(), CreateSerializer()));
+            HotkeysConfig hotkeys = hotkeyJson == null ? new HotkeysConfig() : Deserialize<HotkeysConfig>(hotkeyJson);
+            if (hotkeys.Hotkeys == null || hotkeys.Hotkeys.Any(x => x?.TaskSettings == null || x.HotkeyInfo == null))
+                throw new InvalidDataException("The hotkey configuration contains an incomplete entry.");
+            plan.HotkeyCount = hotkeys.Hotkeys.Count;
+            migration.BlockInheritedDestinations(app, hotkeys);
+            // Secondary destinations are unavailable in 22 and must never become a
+            // fallback for a blocked destination, including a mixed 21/22 profile.
+            if (plan.Warnings.Count > 0) app.UseSecondaryUploaders = false;
+            ResetSourceFFmpeg(app.DefaultTaskSettings, source, plan, "DefaultTaskSettings");
+            for (int i = 0; i < hotkeys.Hotkeys.Count; i++) ResetSourceFFmpeg(hotkeys.Hotkeys[i].TaskSettings, source, plan, $"Hotkeys[{i + 1}]");
             SanitizeApplication(app);
             SanitizeTask(app.DefaultTaskSettings);
             foreach (HotkeySettings hotkey in hotkeys.Hotkeys) SanitizeTask(hotkey.TaskSettings);
@@ -127,6 +147,24 @@ namespace ShareX
             plan.Files[ConfigNames[1]] = Serialize(hotkeys);
             plan.Files[ConfigNames[2]] = Serialize(uploaders);
             return plan;
+        }
+
+        private static void ResetSourceFFmpeg(TaskSettings task, string source, ImportPlan plan, string location)
+        {
+            var options = task?.CaptureSettings?.FFmpegOptions;
+            if (options == null || !options.OverrideCLIPath || string.IsNullOrWhiteSpace(options.CLIPath)) return;
+            try
+            {
+                string path = Path.GetFullPath(options.CLIPath, source);
+                if (!IsWithin(path, source)) return;
+            }
+            catch (Exception error) when (error is ArgumentException || error is NotSupportedException || error is PathTooLongException)
+            {
+                // Invalid overrides are also unusable in the destination profile.
+            }
+            options.OverrideCLIPath = false;
+            options.CLIPath = "";
+            plan.Warnings.Add(location + ".CaptureSettings.FFmpegOptions: FFmpeg override within the source profile (or invalid path) cleared; SunShot's own recorder path will be used.");
         }
 
         private static JObject ReadConfig(string path)
@@ -139,8 +177,9 @@ namespace ShareX
             using JsonTextReader reader = new JsonTextReader(input) { MaxDepth = 64, DateParseHandling = DateParseHandling.None };
             JObject json = JObject.Load(reader, new JsonLoadSettings { DuplicatePropertyNameHandling = DuplicatePropertyNameHandling.Error });
             if (reader.Read()) throw new InvalidDataException("A settings file contains extra data after its JSON object.");
-            if (!Version.TryParse((string)json["ApplicationVersion"], out Version version) || version.Major != 21 || version.Minor != 0 || version.Build > 0 || version.Revision > 0)
-                throw new InvalidDataException("This importer supports ShareX 21.0 settings. Older or newer settings must first be checked with a compatible ShareX version.");
+            if (!Version.TryParse((string)json["ApplicationVersion"], out Version version) || version.Build > 0 || version.Revision > 0 ||
+                !((version.Major == 21 && version.Minor == 0) || (version.Major == 22 && version.Minor >= 0 && version.Minor <= 4)))
+                throw new InvalidDataException("This importer supports ShareX 21.0 and 22.0 through 22.4 release settings only. Other versions must first be checked for compatibility.");
             ImportImageEffectsBinder effects = new ImportImageEffectsBinder();
             foreach (JProperty metadata in json.Descendants().OfType<JProperty>().Where(x => x.Name.StartsWith("$", StringComparison.Ordinal)))
             {
@@ -153,6 +192,13 @@ namespace ShareX
                     throw new InvalidDataException("Settings contain unsupported JSON type or reference metadata.");
             }
             return json;
+        }
+
+        private static void CheckFileVersion(JObject json, ImportPlan plan, string file)
+        {
+            Version version = Version.Parse((string)json["ApplicationVersion"]), source = Version.Parse(plan.SourceVersion);
+            if (version.Major != source.Major || version.Minor != source.Minor)
+                plan.Warnings.Add(file + ": version differs from ApplicationConfig.json; each file is converted using its own supported version. Review the combined workflows and destinations.");
         }
 
         private sealed class ImportImageEffectsBinder : ISerializationBinder
@@ -248,8 +294,14 @@ namespace ShareX
             app.TrayMiddleClickAction = HotkeyType.None;
             app.QuickTaskPresets ??= new List<QuickTaskInfo>();
             app.QuickTaskPresets.RemoveAll(x => x == null);
-            foreach (QuickTaskInfo preset in app.QuickTaskPresets)
-                preset.AfterCaptureTasks = SafeCaptureTasks(preset.AfterCaptureTasks);
+            app.QuickTaskPresets.RemoveAll(preset =>
+            {
+                AfterCaptureTasks original = preset.AfterCaptureTasks;
+                preset.AfterCaptureTasks = SafeCaptureTasks(original);
+                bool wasSeparator = original == AfterCaptureTasks.None && string.IsNullOrEmpty(preset.Name);
+                if (original != preset.AfterCaptureTasks) preset.Name = null;
+                return !wasSeparator && preset.AfterCaptureTasks == AfterCaptureTasks.None;
+            });
             app.ActionsToolbarList?.RemoveAll(x => x == HotkeyType.AnalyzeImage);
         }
 

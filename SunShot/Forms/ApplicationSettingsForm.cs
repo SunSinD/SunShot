@@ -755,8 +755,8 @@ namespace ShareX
                 {
                     sfd.DefaultExt = "sxb";
                     string sanitizedMachineName = FileHelpers.SanitizeFileName(Environment.MachineName.ToLowerInvariant());
-                    sfd.FileName = $"ShareX-{Helpers.GetApplicationVersion()}-{sanitizedMachineName}-backup.sxb";
-                    sfd.Filter = "ShareX backup (*.sxb)|*.sxb|All files (*.*)|*.*";
+                    sfd.FileName = $"{Program.AppName}-{Helpers.GetApplicationVersion()}-{sanitizedMachineName}-backup.sxb";
+                    sfd.Filter = "SunShot backup (*.sxb)|*.sxb|All files (*.*)|*.*";
 
                     if (sfd.ShowDialog() == DialogResult.OK)
                     {
@@ -769,10 +769,10 @@ namespace ShareX
 
                         DebugHelper.WriteLine($"Export started: {exportPath}");
 
-                        await Task.Run(() =>
+                        bool exported = await Task.Run(() =>
                         {
                             SettingManager.SaveAllSettings();
-                            SettingManager.Export(exportPath, exportSettings, exportHistory);
+                            return SettingManager.Export(exportPath, exportSettings, exportHistory);
                         });
 
                         if (!IsDisposed)
@@ -780,9 +780,11 @@ namespace ShareX
                             pbExportImport.Visible = false;
                             btnExport.Enabled = true;
                             btnImport.Enabled = true;
+                            if (exported) MessageBox.Show(this, SunShotUI.Text("BackupExported"), Program.AppName,
+                                MessageBoxButtons.OK, MessageBoxIcon.Information);
                         }
 
-                        DebugHelper.WriteLine($"Export completed: {exportPath}");
+                        if (exported) DebugHelper.WriteLine($"Export completed: {exportPath}");
                     }
                 }
             }
