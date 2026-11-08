@@ -57,6 +57,21 @@ try {
         & $DotnetPath publish $project -c Release -p:Platform=x64 --self-contained true -p:DebugType=None -p:DebugSymbols=false --source https://api.nuget.org/v3/index.json -o $stage
         if ($LASTEXITCODE -ne 0) { throw "Publish failed: $project" }
     }
+    $privatePaths = @($repoRoot, [Environment]::GetFolderPath('UserProfile')) | Where-Object { $_ }
+    $ownAssemblies = [IO.Directory]::EnumerateFiles($stage, '*.dll', [IO.SearchOption]::AllDirectories) | Where-Object {
+        [IO.Path]::GetFileName($_) -match '^(SunShot|ShareX[._]).*\.dll$'
+    }
+    foreach ($assembly in $ownAssemblies) {
+        $bytes = [IO.File]::ReadAllBytes($assembly)
+        foreach ($encoding in @([Text.Encoding]::UTF8, [Text.Encoding]::Unicode)) {
+            $content = $encoding.GetString($bytes)
+            foreach ($privatePath in $privatePaths) {
+                if ($content.IndexOf($privatePath, [StringComparison]::OrdinalIgnoreCase) -ge 0) {
+                    throw "Local build path embedded in release assembly: $([IO.Path]::GetFileName($assembly))"
+                }
+            }
+        }
+    }
     foreach ($symbols in [IO.Directory]::EnumerateFiles($stage, '*.pdb', [IO.SearchOption]::AllDirectories)) {
         [IO.File]::Delete($symbols)
     }
