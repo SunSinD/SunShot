@@ -135,10 +135,18 @@ namespace ShareX
                 return true;
             }
 
-            await Task.Delay(1000).ConfigureAwait(false);
-            while (WaitForFile())
+            try
             {
-                await Task.Delay(250).ConfigureAwait(false);
+                await Task.Delay(1000).ConfigureAwait(false);
+                while (WaitForFile())
+                {
+                    await Task.Delay(250).ConfigureAwait(false);
+                }
+            }
+            catch (Exception error) when (error is IOException || error is UnauthorizedAccessException)
+            {
+                DebugHelper.WriteLine($"Watch folder skipped inaccessible file: {path}");
+                return;
             }
 
             if (!ReferenceEquals(sender, fileWatcher))

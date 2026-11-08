@@ -96,6 +96,27 @@ static class Regression
         }
     }
 
+    static async Task WatchedDirectory(string root)
+    {
+        string directory = Path.Combine(root, Guid.NewGuid().ToString("N"));
+        string child = Path.Combine(directory, "child");
+        Directory.CreateDirectory(child);
+        using var watcher = new WatchFolder { Settings = new WatchFolderSettings { FolderPath = directory }, TaskSettings = new TaskSettings() };
+        int count = 0;
+        watcher.FileWatcherTrigger += _ => Interlocked.Increment(ref count);
+        watcher.Enable();
+        object sender = typeof(WatchFolder).GetField("fileWatcher", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(watcher)!;
+        MethodInfo created = typeof(WatchFolder).GetMethod("fileWatcher_Created", BindingFlags.Instance | BindingFlags.NonPublic)!;
+        var errors = new QueuedContext();
+        SynchronizationContext? original = SynchronizationContext.Current;
+        SynchronizationContext.SetSynchronizationContext(errors);
+        try { created.Invoke(watcher, [sender, new FileSystemEventArgs(WatcherChangeTypes.Created, directory, "child")]); }
+        finally { SynchronizationContext.SetSynchronizationContext(original); }
+        await Task.Delay(2500);
+        Check(!errors.Posted.Task.IsCompleted, "watched directory does not raise an unhandled access error");
+        Check(count == 0, "watched directory is not delivered as a file");
+    }
+
     static async Task PendingCallback(string root, bool reenable)
     {
         string directory = Path.Combine(root, Guid.NewGuid().ToString("N"));
@@ -173,6 +194,7 @@ static class Regression
             await Watch(root, false, false, true);
             await Watch(root, false, true);
             await LockedBatch(root);
+            await WatchedDirectory(root);
             await PendingCallback(root, false);
             await PendingCallback(root, true);
             Console.WriteLine($"{checks} assertions passed.");
