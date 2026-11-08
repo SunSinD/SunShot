@@ -88,7 +88,7 @@ CREATE TABLE IF NOT EXISTS History (
         {
             List<HistoryItem> items = new List<HistoryItem>();
 
-            using (SqliteCommand cmd = new SqliteCommand("SELECT * FROM History;", connection))
+            using (SqliteCommand cmd = new SqliteCommand("SELECT * FROM History ORDER BY julianday(DateTime), Id;", connection))
             using (SqliteDataReader reader = cmd.ExecuteReader())
             {
                 while (reader.Read())

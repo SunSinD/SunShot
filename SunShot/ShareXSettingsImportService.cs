@@ -33,6 +33,13 @@ namespace ShareX
         {
             internal readonly Dictionary<string, byte[]> Files = new Dictionary<string, byte[]>();
             internal string Destination;
+            internal string Source;
+            internal ShareXHistoryImportService.Payload History;
+            public bool HistoryRequested { get; internal set; }
+            public bool HasHistory { get; internal set; }
+            public int HistoryCount { get; internal set; }
+            public bool ReusesCaptureFolder { get; internal set; }
+            public string CaptureFolder { get; internal set; }
             public int HotkeyCount { get; internal set; }
             public bool HasUploaders { get; internal set; }
             public bool HasHotkeys { get; internal set; }
@@ -53,19 +60,32 @@ namespace ShareX
         };
 
         public static ImportPlan Prepare(string sourceFolder, string destinationFolder)
+            => PrepareMigration(sourceFolder, destinationFolder, false, false);
+
+        public static void ValidateDestinationForImport(string sourceFolder, string destinationFolder)
         {
             string source = NormalizeFolder(sourceFolder);
             string destination = NormalizeFolder(destinationFolder);
+            if (!ShareXHistoryImportService.IsLocalAbsolutePath(source) || !ShareXHistoryImportService.IsLocalAbsolutePath(destination))
+                throw new InvalidDataException("Select real local ShareX and SunShot profile folders.");
             if (IsWithin(source, destination) || IsWithin(destination, source))
                 throw new InvalidDataException("The ShareX and SunShot profile folders must be separate and cannot contain one another.");
             EnsureNoLinks(source);
             EnsureNoLinks(destination);
             if (!Directory.Exists(source)) throw new DirectoryNotFoundException("The selected ShareX profile folder does not exist.");
+            foreach (string name in ConfigNames) ValidateRegularTarget(Path.Combine(destination, name));
+        }
+
+        public static ImportPlan PrepareMigration(string sourceFolder, string destinationFolder, bool importHistory, bool reuseCaptureFolder)
+        {
+            ValidateDestinationForImport(sourceFolder, destinationFolder);
+            string source = NormalizeFolder(sourceFolder);
+            string destination = NormalizeFolder(destinationFolder);
 
             JObject appJson = ReadConfig(Path.Combine(source, ConfigNames[0]));
             if (appJson["DefaultTaskSettings"] is not JObject)
                 throw new InvalidDataException("ApplicationConfig.json must contain ShareX task settings.");
-            ImportPlan plan = new ImportPlan { Destination = destination, SourceVersion = (string)appJson["ApplicationVersion"] };
+            ImportPlan plan = new ImportPlan { Source = source, Destination = destination, SourceVersion = (string)appJson["ApplicationVersion"], HistoryRequested = importHistory };
             foreach (string field in new[] { "CustomHotkeysConfigPath", "CustomUploadersConfigPath" })
                 if (appJson[field]?.Type == JTokenType.String && !string.IsNullOrWhiteSpace((string)appJson[field]))
                     plan.Warnings.Add(field + ": external config path was not followed. Only files in the selected profile folder are imported; an absent file uses SunShot defaults.");
@@ -140,13 +160,70 @@ namespace ShareX
             if (plan.Warnings.Count > 0) app.UseSecondaryUploaders = false;
             ResetSourceFFmpeg(app.DefaultTaskSettings, source, plan, "DefaultTaskSettings");
             for (int i = 0; i < hotkeys.Hotkeys.Count; i++) ResetSourceFFmpeg(hotkeys.Hotkeys[i].TaskSettings, source, plan, $"Hotkeys[{i + 1}]");
+            string captureFolder = reuseCaptureFolder ? SelectCaptureFolder(app, source, destination, plan) : null;
             SanitizeApplication(app);
             SanitizeTask(app.DefaultTaskSettings);
             foreach (HotkeySettings hotkey in hotkeys.Hotkeys) SanitizeTask(hotkey.TaskSettings);
+            if (captureFolder != null)
+            {
+                app.UseCustomScreenshotsPath = true;
+                app.CustomScreenshotsPath = captureFolder;
+                app.DefaultTaskSettings.ImageSettings.FileExistAction = FileExistAction.UniqueName;
+                foreach (HotkeySettings hotkey in hotkeys.Hotkeys) hotkey.TaskSettings.ImageSettings.FileExistAction = FileExistAction.UniqueName;
+                plan.ReusesCaptureFolder = true;
+                plan.CaptureFolder = captureFolder;
+            }
+            if (importHistory)
+            {
+                plan.History = ShareXHistoryImportService.Prepare(source, plan.Warnings);
+                plan.HasHistory = plan.History != null;
+                plan.HistoryCount = plan.History?.Count ?? 0;
+            }
             plan.Files[ConfigNames[0]] = Serialize(app);
             plan.Files[ConfigNames[1]] = Serialize(hotkeys);
             plan.Files[ConfigNames[2]] = Serialize(uploaders);
             return plan;
+        }
+
+        private static string SelectCaptureFolder(ApplicationConfig app, string source, string destination, ImportPlan plan)
+        {
+            try
+            {
+                string candidate = Path.Combine(source, "Screenshots");
+                if (app.UseCustomScreenshotsPath)
+                {
+                    candidate = "";
+                    string primary = ExpandCaptureFolder(app.CustomScreenshotsPath, source);
+                    if (!string.IsNullOrEmpty(primary) && (string.IsNullOrEmpty(app.CustomScreenshotsPath2) || Directory.Exists(primary))) candidate = primary;
+                    else
+                    {
+                        string fallback = ExpandCaptureFolder(app.CustomScreenshotsPath2, source);
+                        if (!string.IsNullOrEmpty(fallback) && Directory.Exists(fallback)) candidate = fallback;
+                    }
+                }
+                if (!ShareXHistoryImportService.IsLocalAbsolutePath(candidate)) throw new InvalidDataException();
+                candidate = NormalizeFolder(candidate);
+                EnsureNoLinks(candidate);
+                if (!Directory.Exists(candidate) || new DriveInfo(Path.GetPathRoot(candidate)).DriveType == DriveType.Network ||
+                    IsWithin(candidate, destination) || IsWithin(destination, candidate)) throw new InvalidDataException();
+                return candidate;
+            }
+            catch (Exception error) when (error is IOException || error is InvalidDataException || error is ArgumentException || error is NotSupportedException || error is UnauthorizedAccessException)
+            {
+                plan.Warnings.Add("Capture folder reuse was skipped: the source folder is missing, unsupported, linked, or overlaps the SunShot profile. SunShot's default capture folder will be used.");
+                return null;
+            }
+        }
+
+        private static string ExpandCaptureFolder(string value, string source)
+        {
+            if (string.IsNullOrEmpty(value)) return value;
+            string expanded = FileHelpers.ExpandFolderVariables(value);
+            if (expanded.Contains('%')) throw new InvalidDataException();
+            if (!Path.IsPathFullyQualified(expanded)) expanded = Path.GetFullPath(expanded, source);
+            if (!ShareXHistoryImportService.IsLocalAbsolutePath(expanded)) throw new InvalidDataException();
+            EnsureNoLinks(expanded);
+            return expanded;
         }
 
         private static void ResetSourceFFmpeg(TaskSettings task, string source, ImportPlan plan, string location)
@@ -328,28 +405,54 @@ namespace ShareX
 
         public static string Apply(ImportPlan plan)
         {
+            if (plan == null) throw new ArgumentNullException(nameof(plan));
             string destination = plan.Destination;
-            EnsureNoLinks(destination);
+            ValidateDestinationForImport(plan.Source, destination);
+            if (plan.ReusesCaptureFolder)
+            {
+                EnsureNoLinks(plan.CaptureFolder);
+                if (!Directory.Exists(plan.CaptureFolder) || IsWithin(plan.CaptureFolder, destination) || IsWithin(destination, plan.CaptureFolder))
+                    throw new InvalidDataException("The approved capture folder is no longer available. Prepare the import again.");
+            }
             Directory.CreateDirectory(destination);
             RecoverPendingImport(destination);
+            bool history = plan.History != null;
+            string[] names = history ? ConfigNames.Concat(new[] { "History.db" }).ToArray() : ConfigNames;
+            if (history) ShareXHistoryImportService.ValidateDestination(destination);
             string backupName = "ShareX-import-" + DateTime.Now.ToString("yyyyMMdd-HHmmss") + "-" + Guid.NewGuid().ToString("N");
             string backup = Path.Combine(destination, "Backup", backupName);
             EnsureNoLinks(backup);
             Directory.CreateDirectory(backup);
-            foreach (string name in ConfigNames)
+            foreach (string name in names)
             {
                 string target = Path.Combine(destination, name);
-                EnsureNoLinks(target);
-                if (File.Exists(target)) File.Copy(target, Path.Combine(backup, name + ".original"));
-                else File.WriteAllText(Path.Combine(backup, name + ".absent"), "");
-                WriteDurable(Path.Combine(backup, name + ".new"), plan.Files[name]);
+                ValidateRegularTarget(target);
+                if (history) ShareXHistoryImportService.ValidateDestination(destination);
+                if (File.Exists(target))
+                {
+                    using FileStream input = new FileStream(target, FileMode.Open, FileAccess.Read, FileShare.Read);
+                    if (name == "History.db") ShareXHistoryImportService.ValidateSize(input);
+                    using FileStream output = new FileStream(Path.Combine(backup, name + ".original"), FileMode.CreateNew, FileAccess.Write, FileShare.None);
+                    input.CopyTo(output);
+                    output.Flush(true);
+                }
+                else WriteDurable(Path.Combine(backup, name + ".absent"), Array.Empty<byte>());
+                if (name != "History.db") WriteDurable(Path.Combine(backup, name + ".new"), plan.Files[name]);
             }
+            if (history) ShareXHistoryImportService.StageMerge(plan.History, Path.Combine(backup, "History.db.original"), Path.Combine(backup, "History.db.new"));
+            ValidateDestinationForImport(plan.Source, destination);
+            if (history) ShareXHistoryImportService.ValidateDestination(destination);
             string journal = Path.Combine(destination, JournalName);
+            ValidateRegularTarget(journal);
             WriteDurable(journal, Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(backupName)));
             try
             {
-                foreach (string name in ConfigNames)
+                foreach (string name in names)
+                {
+                    if (history) ShareXHistoryImportService.ValidateDestination(destination);
+                    ValidateRegularTarget(Path.Combine(destination, name));
                     ReplaceFile(Path.Combine(backup, name + ".new"), Path.Combine(destination, name));
+                }
                 File.Delete(journal);
             }
             catch
@@ -366,31 +469,54 @@ namespace ShareX
             string destination = NormalizeFolder(destinationFolder);
             string journal = Path.Combine(destination, JournalName);
             if (!File.Exists(journal)) return;
-            EnsureNoLinks(journal);
-            string backupName = JsonConvert.DeserializeObject<string>(File.ReadAllText(journal));
+            ValidateRegularTarget(journal);
+            string backupName;
+            using (FileStream input = new FileStream(journal, FileMode.Open, FileAccess.Read, FileShare.Read))
+            {
+                if (input.Length > 4096) throw new InvalidDataException("SunShot import recovery information is invalid.");
+                using StreamReader reader = new StreamReader(input, Encoding.UTF8);
+                try { backupName = JsonConvert.DeserializeObject<string>(reader.ReadToEnd()); }
+                catch (JsonException) { throw new InvalidDataException("SunShot import recovery information is invalid."); }
+            }
             if (string.IsNullOrEmpty(backupName) || !backupName.StartsWith("ShareX-import-", StringComparison.Ordinal) ||
                 backupName != Path.GetFileName(backupName) || backupName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
                 throw new InvalidDataException("SunShot import recovery information is invalid.");
             string backup = Path.Combine(destination, "Backup", backupName);
             EnsureNoLinks(backup);
+            foreach (string marker in new[] { "History.db.original", "History.db.absent" }) ValidateRegularTarget(Path.Combine(backup, marker));
+            bool history = new[] { "History.db.original", "History.db.absent" }.Any(name => File.Exists(Path.Combine(backup, name)));
+            string[] names = history ? ConfigNames.Concat(new[] { "History.db" }).ToArray() : ConfigNames;
+            if (history) ShareXHistoryImportService.ValidateDestination(destination);
             // Check the whole backup before touching any destination files.
-            foreach (string name in ConfigNames)
+            foreach (string name in names)
             {
-                EnsureNoLinks(Path.Combine(destination, name));
-                EnsureNoLinks(Path.Combine(backup, name + ".original"));
-                EnsureNoLinks(Path.Combine(backup, name + ".absent"));
-                if (!File.Exists(Path.Combine(backup, name + ".original")) && !File.Exists(Path.Combine(backup, name + ".absent")))
+                ValidateRegularTarget(Path.Combine(destination, name));
+                ValidateRegularTarget(Path.Combine(backup, name + ".original"));
+                ValidateRegularTarget(Path.Combine(backup, name + ".absent"));
+                ValidateRegularTarget(Path.Combine(backup, name + ".restore"));
+                if (File.Exists(Path.Combine(backup, name + ".original")) == File.Exists(Path.Combine(backup, name + ".absent")))
                     throw new InvalidDataException("An import backup is incomplete. Restore the settings from its Backup folder before opening SunShot.");
             }
-            foreach (string name in ConfigNames)
+            string historyBackup = Path.Combine(backup, "History.db.original");
+            if (history && File.Exists(historyBackup)) ShareXHistoryImportService.ValidateBackup(historyBackup);
+            foreach (string name in names)
             {
+                if (history) ShareXHistoryImportService.ValidateDestination(destination);
                 string original = Path.Combine(backup, name + ".original");
                 string target = Path.Combine(destination, name);
+                ValidateRegularTarget(original);
+                ValidateRegularTarget(target);
                 if (File.Exists(original))
                 {
                     string recovery = Path.Combine(backup, name + ".restore");
-                    EnsureNoLinks(recovery);
-                    File.Copy(original, recovery, true);
+                    ValidateRegularTarget(recovery);
+                    File.Delete(recovery);
+                    using (FileStream input = new FileStream(original, FileMode.Open, FileAccess.Read, FileShare.Read))
+                    using (FileStream output = new FileStream(recovery, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+                    {
+                        input.CopyTo(output);
+                        output.Flush(true);
+                    }
                     ReplaceFile(recovery, target);
                 }
                 else File.Delete(target);
@@ -420,7 +546,13 @@ namespace ShareX
         private static bool IsWithin(string child, string parent) => child.Equals(parent, StringComparison.OrdinalIgnoreCase) ||
             child.StartsWith(Path.EndsInDirectorySeparator(parent) ? parent : parent + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase);
 
-        private static void EnsureNoLinks(string path)
+        internal static void ValidateRegularTarget(string path)
+        {
+            EnsureNoLinks(path);
+            if (Directory.Exists(path)) throw new InvalidDataException("An import file path is occupied by a folder.");
+        }
+
+        internal static void EnsureNoLinks(string path)
         {
             for (string current = Path.GetFullPath(path); !string.IsNullOrEmpty(current); current = Path.GetDirectoryName(current))
             {
@@ -432,7 +564,7 @@ namespace ShareX
                         FileSystemInfo entry = (attributes & FileAttributes.Directory) != 0
                             ? new DirectoryInfo(current) : new FileInfo(current);
                         if (entry.LinkTarget != null)
-                            throw new InvalidDataException("Profile files and folders cannot be symbolic links or junctions. Select a regular local profile folder.");
+                            throw new InvalidDataException("Profile files and folders cannot be symbolic links or junctions. Select the real local profile folder instead of an alias.");
                     }
                 }
                 catch (FileNotFoundException) { }

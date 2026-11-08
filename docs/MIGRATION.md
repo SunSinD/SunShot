@@ -1,14 +1,15 @@
 # Moving from ShareX
 
-ShareX 22 import requires SunShot 0.1.1. The published 0.1.0 release supports ShareX 21 only.
+ShareX 22 import, history import and capture-folder reuse require the upcoming SunShot 0.1.1. The published 0.1.0 release imports ShareX 21 settings only.
 
 SunShot uses `Documents\SunShot` for installed settings, captures, and history. Portable builds use the `SunShot` folder beside `SunShot.exe`. Neither mode automatically opens ShareX's profile or follows its `PersonalPath.cfg`.
 
 1. Close ShareX so its settings are saved.
 2. Open SunShot and choose **Import ShareX settings**.
 3. Select the folder containing ShareX 21.0 or 22.0–22.4's `ApplicationConfig.json`. The usual location is `Documents\ShareX`; portable installations may use another folder.
-4. Prepare the preview, read the compatibility report, then choose **Import and restart**. Canceling the preview leaves SunShot unchanged.
-5. Review the imported settings. To enable hotkeys, choose **Enable hotkeys** in the tray menu. To enable uploading, clear **DisableUpload** in **Application settings > Advanced**. Close ShareX before enabling conflicting shortcuts.
+4. Leave **Import capture history** selected to bring old records into SunShot. Optionally select **Save new captures in the existing ShareX screenshot folder** to keep using that folder for future captures.
+5. Prepare the preview, read the compatibility report and check the capture folder, then choose **Import and restart**. Canceling the preview leaves SunShot unchanged.
+6. Review the imported settings. To enable hotkeys, choose **Enable hotkeys** in the tray menu. To enable uploading, clear **DisableUpload** in **Application settings > Advanced**. Close ShareX before enabling conflicting shortcuts.
 
 The importer accepts ShareX 21.0 and the audited 22.0, 22.1, 22.2, 22.3 and 22.4 release schemas. Other releases, including 22.5 and future versions, are rejected. Each file's version is checked separately; mixed supported versions are converted independently and reported for review. It copies compatible capture preferences, workflows, hotkey definitions, and upload destinations, including readable saved credentials. Missing hotkey or uploader files use defaults and are labeled that way in the preview. Credentials protected by a different Windows account are cleared and reported.
 
@@ -23,10 +24,24 @@ For ShareX 22, this is a practical import of common settings, not a promise to p
 
 The report lists ignored or reset settings without including their values, saved credentials or source paths. Custom hotkey/uploader config paths are not followed; a profile using them gets an explicit warning before those paths are cleared. Only files in the selected folder are read, including the local machine-specific uploader file when applicable. The image-effect type allowlist stays strict: unsupported JSON type/reference metadata is rejected.
 
-Automatic upload, external actions, deletion tasks, AI tasks, watch folders, global hotkeys, and uploading are disabled after import. Upload-only quick presets are removed; other changed presets lose their custom labels so their names reflect the remaining actions. Intentional menu separators are retained. Screenshot and config paths are reset to SunShot's own folders. History, images, startup settings, file associations, external config files, and `PersonalPath.cfg` are excluded.
+Automatic upload, external actions, deletion tasks, AI tasks, watch folders, global hotkeys, and uploading are disabled after import. Upload-only quick presets are removed; other changed presets lose their custom labels so their names reflect the remaining actions. Intentional menu separators are retained. Config paths use SunShot's own profile. New captures use SunShot's screenshots folder unless you explicitly choose to reuse the existing ShareX folder. Startup settings, file associations, external config files and `PersonalPath.cfg` are excluded.
+
+## Existing captures and history
+
+History import merges records into SunShot's own database. Existing SunShot records are kept, duplicate records are skipped and original file paths, upload links and favorites are retained. Both **History** and **Image history** can use those records. Missing files remain in history; importing a record cannot recover a deleted image. Older imported captures keep their capture dates rather than appearing as newly taken screenshots.
+
+Images are not copied, moved, renamed or deleted. Keep the original capture folders: history continues to refer to the files there. Editing or deleting a file through history still affects that original file.
+
+Reusing the screenshot folder is optional and applies to future captures. The preview shows the selected existing local folder. New captures use unique filenames to protect files already there. Separate per-hotkey folder overrides and fallback folders are reset; review them manually if needed.
+
+Close ShareX before importing and close SunShot's History and Image history windows. The importer reads a consistent history snapshot, including supported SQLite journal data, without opening the original database for writing. A busy, damaged or unsupported history file is reported instead of silently importing partial data. History and settings are backed up and restored together if replacement fails or is interrupted.
+
+History import is limited to 50,000 records in the merged history, 128 MiB for the source database and WAL combined, 32 Mi characters of stored text, and 65,536 characters per field. Legacy JSON input is limited to 32 MiB. These limits bound memory use during import. If history cannot be imported, clear **Import capture history** to import settings only. Invalid dates or tags are skipped and reported; unsupported relative/network/device paths and non-HTTP(S) links are cleared and reported. Existing SunShot records are kept unchanged. A stale or incomplete WAL may be refused even if SQLite could normally ignore its unused frames; open and close ShareX cleanly before retrying.
+
+Profile folders must be separate regular directories. SunShot does not automatically rename a ShareX folder or create links. If you have already made a symbolic link or junction, select the real source directory, not the link. Importing a profile into itself is refused. Existing SunShot hotkey/uploader settings must also use SunShot's own profile rather than external config folders before import.
 
 SunShot backs up its existing settings under its `Backup` folder before replacement. Backups may contain credentials. A failed or interrupted import is rolled back before settings load at the next startup. The source profile is read only.
 
-To restore an import backup manually, close SunShot and first copy the current profile somewhere safe. For each of `ApplicationConfig.json`, `HotkeysConfig.json` and `UploadersConfig.json`, copy the backup's `.original` file into the profile and remove the `.original` suffix from its name. If the backup has an `.absent` marker instead, delete that corresponding live JSON file: it did not exist before the import. Do not copy `.new`, `.restore` or `.absent` files over live settings. The ShareX importer accepts profile folders, not exported `.sxb` archives.
+To restore an import backup manually, close SunShot and first copy the current profile somewhere safe. For each of `ApplicationConfig.json`, `HotkeysConfig.json` and `UploadersConfig.json`, copy the backup's `.original` file into the profile and remove the `.original` suffix from its name. If history was included, do the same for `History.db`. If the backup has an `.absent` marker instead, that corresponding live file did not exist before the import and should be removed during restoration. Do not restore a database while `History.db-wal`, `History.db-shm` or `History.db-journal` is present; keep a copy of the whole profile and resolve the pending SQLite state first. Do not copy `.new`, `.restore` or `.absent` files over live settings. The ShareX importer accepts profile folders, not exported `.sxb` archives.
 
 SunShot uses separate shortcuts, Windows integration, and update downloads. Existing ShareX browser extensions request ShareX's native host name; they do not automatically connect to SunShot. Provider logins using application keys are not configured in this independent build. You can use custom uploaders or configure a supported destination with your own account details.

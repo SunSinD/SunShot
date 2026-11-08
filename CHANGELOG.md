@@ -5,6 +5,7 @@
 ### Added
 
 - Import ShareX 22.0 through 22.4 profiles with explicit settings conversions and a compatibility report before applying changes. Unsupported settings are reported; unavailable upload destinations stay blocked until configured.
+- Offer capture history import and optional reuse of the existing ShareX screenshots folder. History is merged without moving images, and repeated imports skip duplicates.
 - Give the README a clearer layout, download guide and real application screenshot.
 
 ### Fixed

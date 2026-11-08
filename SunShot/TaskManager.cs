@@ -30,7 +30,9 @@ using ShareX.UploadersLib;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -45,6 +47,10 @@ namespace ShareX
         public static bool IsBusy => Tasks.Count > 0 && Tasks.Any(task => task.IsBusy);
 
         private static int lastIconStatus = -1;
+        private static readonly object historyAppendSync = new object();
+        private static readonly object historyWriteSync = new object();
+        private static int pendingHistoryAppends;
+        private static bool historyAppendsSuspended;
 
         public static void Start(WorkerTask task)
         {
@@ -523,18 +529,58 @@ namespace ShareX
 
         private static void AppendHistoryItemAsync(HistoryItem historyItem)
         {
+            HistoryManagerSQLite history;
+            lock (historyAppendSync)
+            {
+                if (historyAppendsSuspended) return;
+                history = Program.HistoryManager;
+                if (history == null) return;
+                pendingHistoryAppends++;
+            }
             Task.Run(() =>
             {
                 try
                 {
-                    Program.HistoryManager.AppendHistoryItem(historyItem);
+                    lock (historyWriteSync) history.AppendHistoryItem(historyItem);
                 }
                 catch (Exception e)
                 {
                     DebugHelper.WriteException(e);
                     e.ShowError();
                 }
+                finally
+                {
+                    lock (historyAppendSync)
+                    {
+                        pendingHistoryAppends--;
+                        Monitor.PulseAll(historyAppendSync);
+                    }
+                }
             });
+        }
+
+        internal static void SuspendHistoryAppendsForImport()
+        {
+            lock (historyAppendSync)
+            {
+                historyAppendsSuspended = true;
+                long deadline = Environment.TickCount64 + 10000;
+                while (pendingHistoryAppends > 0)
+                {
+                    int remaining = (int)Math.Max(0, deadline - Environment.TickCount64);
+                    if (remaining == 0)
+                    {
+                        historyAppendsSuspended = false;
+                        throw new InvalidDataException("History writes are still busy. Wait for them to finish, then try importing again.");
+                    }
+                    Monitor.Wait(historyAppendSync, remaining);
+                }
+            }
+        }
+
+        internal static void ResumeHistoryAppendsAfterFailedImport()
+        {
+            lock (historyAppendSync) historyAppendsSuspended = false;
         }
 
         public static void AddRecentTasksToMainWindow()

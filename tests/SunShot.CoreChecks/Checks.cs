@@ -21,6 +21,12 @@ internal static class Checks
  [STAThread]
  static void Main(string[] args)
  {
+   if(args.Contains("--history-ui-only"))
+   {
+      HistoryLifecycleChecks.RunUi(Check);
+      Console.WriteLine($"{checks} checks passed");
+      return;
+   }
    if(args.Contains("--write-baseline"))
    {
       Directory.CreateDirectory(args[1]);
@@ -167,6 +173,8 @@ internal static class Checks
    }
    Reject(()=>ImportService.Prepare(fixtureJunction,destination),"Windows junction profile rejected");
    ShareX22Checks.Run(root, Check, Reject);
+   HistoryImportChecks.Run(root, Check, Reject);
+   HistoryLifecycleChecks.Run(root, Check);
    if(args.Contains("--import-only")) { Console.WriteLine("CHECKS "+checks+"; synthetic files: "+root); return; }
    Assembly main=typeof(ApplicationConfig).Assembly;
    var flags=BindingFlags.Static|BindingFlags.Public|BindingFlags.NonPublic;
@@ -214,6 +222,7 @@ internal static class Checks
    Check(!(bool)update.Invoke(currentChecker,new object[]{release,true,true}),"upstream asset download URL rejected");
 
 
+   HistoryLifecycleChecks.RunUi(Check);
    foreach(string language in new[]{"en-CA","fr-CA"})
    {
       System.Globalization.CultureInfo.CurrentUICulture=System.Globalization.CultureInfo.GetCultureInfo(language);
@@ -267,6 +276,11 @@ internal static class ImportService
         public int UnreadableCredentials => Get<int>("UnreadableCredentials");
         public bool HasUploaders => Get<bool>("HasUploaders");
         public bool HasHotkeys => Get<bool>("HasHotkeys");
+        public bool HistoryRequested => Get<bool>("HistoryRequested");
+        public bool HasHistory => Get<bool>("HasHistory");
+        public int HistoryCount => Get<int>("HistoryCount");
+        public bool ReusesCaptureFolder => Get<bool>("ReusesCaptureFolder");
+        public string CaptureFolder => Get<string>("CaptureFolder");
         public List<string> Warnings => Get<List<string>>("Warnings");
     }
     private static object Call(string method,params object[] args)
@@ -276,6 +290,8 @@ internal static class ImportService
         { ExceptionDispatchInfo.Capture(error.InnerException).Throw(); throw; }
     }
     public static Plan Prepare(string source,string destination) => new Plan(Call("Prepare",source,destination));
+    public static Plan PrepareMigration(string source,string destination,bool history,bool capture) => new Plan(Call("PrepareMigration",source,destination,history,capture));
+    public static void ValidateDestinationForImport(string source,string destination) => Call("ValidateDestinationForImport",source,destination);
     public static string Apply(Plan plan) => (string)Call("Apply",plan.Value);
     public static void RecoverPendingImport(string destination) => Call("RecoverPendingImport",destination);
     public static bool HasPendingImport(string destination) => (bool)Call("HasPendingImport",destination);
