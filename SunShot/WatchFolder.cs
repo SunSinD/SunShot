@@ -29,6 +29,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace ShareX
 {
@@ -90,7 +91,7 @@ namespace ShareX
             Stopwatch idleTimer = Stopwatch.StartNew();
             bool timedOut = false;
 
-            await Helpers.WaitWhileAsync(() =>
+            bool WaitForFile()
             {
                 if (!ReferenceEquals(sender, fileWatcher))
                 {
@@ -132,28 +133,33 @@ namespace ShareX
                 previousSize = -1;
                 successCount = 0;
                 return true;
-            }, 250, -1, () =>
-            {
-                if (!ReferenceEquals(sender, fileWatcher))
-                {
-                    return;
-                }
+            }
 
-                if (timedOut)
+            await Task.Delay(1000).ConfigureAwait(false);
+            while (WaitForFile())
+            {
+                await Task.Delay(250).ConfigureAwait(false);
+            }
+
+            if (!ReferenceEquals(sender, fileWatcher))
+            {
+                return;
+            }
+
+            if (timedOut)
+            {
+                DebugHelper.WriteLine($"Watch folder skipped file because it is still locked or empty: {path}");
+            }
+            else
+            {
+                context.Post(state =>
                 {
-                    DebugHelper.WriteLine($"Watch folder skipped file because it is still locked or empty: {path}");
-                }
-                else
-                {
-                    context.Post(state =>
+                    if (ReferenceEquals(sender, fileWatcher))
                     {
-                        if (ReferenceEquals(sender, fileWatcher))
-                        {
-                            OnFileWatcherTrigger(path);
-                        }
-                    }, null);
-                }
-            }, 1000);
+                        OnFileWatcherTrigger(path);
+                    }
+                }, null);
+            }
         }
 
         protected void CleanElapsedTimers()

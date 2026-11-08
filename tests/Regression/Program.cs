@@ -55,6 +55,47 @@ static class Regression
         public override void Post(SendOrPostCallback callback, object? state) => Posted.TrySetResult((callback, state));
     }
 
+    static async Task LockedBatch(string root)
+    {
+        string directory = Path.Combine(root, Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(directory);
+        using var watcher = new WatchFolder { Settings = new WatchFolderSettings { FolderPath = directory }, TaskSettings = new TaskSettings() };
+        var writers = new List<FileStream>();
+        ThreadPool.GetMinThreads(out int minimumWorkers, out int minimumIo);
+        Check(ThreadPool.SetMinThreads(Math.Max(minimumWorkers, 32), minimumIo), "locked-file test worker capacity configured");
+        int count = 0;
+        watcher.FileWatcherTrigger += _ => Interlocked.Increment(ref count);
+        try
+        {
+            for (int i = 0; i < 16; i++)
+            {
+                var writer = new FileStream(Path.Combine(directory, $"locked-{i}.bin"), FileMode.Create, FileAccess.Write, FileShare.None);
+                writer.SetLength(4096);
+                writers.Add(writer);
+            }
+            watcher.Enable();
+            object sender = typeof(WatchFolder).GetField("fileWatcher", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(watcher)!;
+            MethodInfo created = typeof(WatchFolder).GetMethod("fileWatcher_Created", BindingFlags.Instance | BindingFlags.NonPublic)!;
+            ThreadPool.GetAvailableThreads(out int workersBefore, out _);
+            for (int i = 0; i < writers.Count; i++)
+                created.Invoke(watcher, [sender, new FileSystemEventArgs(WatcherChangeTypes.Created, directory, $"locked-{i}.bin")]);
+            await Task.Delay(2500);
+            ThreadPool.GetAvailableThreads(out int workersAfter, out _);
+            Check(workersBefore - workersAfter < 8, "sixteen locked watched files do not occupy one worker each");
+            Check(count == 0, "locked batch is not delivered");
+            watcher.Dispose();
+            foreach (FileStream writer in writers) writer.Dispose();
+            await Task.Delay(1500);
+            Check(count == 0, "disposed watcher drops pending locked files after they close");
+        }
+        finally
+        {
+            watcher.Dispose();
+            foreach (FileStream writer in writers) writer.Dispose();
+            ThreadPool.SetMinThreads(minimumWorkers, minimumIo);
+        }
+    }
+
     static async Task PendingCallback(string root, bool reenable)
     {
         string directory = Path.Combine(root, Guid.NewGuid().ToString("N"));
@@ -131,6 +172,7 @@ static class Regression
             await Watch(root, true, false);
             await Watch(root, false, false, true);
             await Watch(root, false, true);
+            await LockedBatch(root);
             await PendingCallback(root, false);
             await PendingCallback(root, true);
             Console.WriteLine($"{checks} assertions passed.");

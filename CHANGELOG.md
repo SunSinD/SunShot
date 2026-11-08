@@ -11,6 +11,7 @@
 
 - Use the same destination confirmation for History and Image history uploads as the main window.
 - Wait for locked, preallocated watched files to finish copying, even when their size stays unchanged for more than five seconds.
+- Poll pending watched files asynchronously so locked files do not occupy background threads while waiting.
 - Correct remaining recording tooltips and capture, effects, input and output window titles to use SunShot.
 - Update the editor's Debug-only developer tools setup for the installed Avalonia version.
 - Name exported backups after SunShot, report success accurately and explain manual restoration.
