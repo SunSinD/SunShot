@@ -5,21 +5,17 @@
 <h1 align="center">SunShot</h1>
 <p align="center">A clean screen capture and recording app.</p>
 <p align="center">
-  <a href="https://github.com/SunSinD/SunShot/releases/latest">Download</a> &middot;
-  <a href="docs/MIGRATION.md">Move from ShareX</a> &middot;
-  <a href="CHANGELOG.md">What's new</a> &middot;
+  <a href="https://github.com/SunSinD/SunShot/releases/latest">Download</a> &nbsp;&nbsp;
+  <a href="docs/MIGRATION.md">Move from ShareX</a> &nbsp;&nbsp;
+  <a href="CHANGELOG.md">What's new</a> &nbsp;&nbsp;
   <a href="https://github.com/SunSinD/SunShot/issues">Feedback</a>
 </p>
 <p align="center">
-  <a href="https://github.com/SunSinD/SunShot/releases/latest"><img src="https://img.shields.io/github/v/release/SunSinD/SunShot?style=flat&color=555&label=release" alt="Latest release"></a>
+  <a href="https://github.com/SunSinD/SunShot/releases/latest">Latest release</a>
   <a href="LICENSE.txt"><img src="https://img.shields.io/badge/license-GPL--3.0-555?style=flat" alt="GPL-3.0 license"></a>
 </p>
 
 Capture your screen, add annotations, and copy, save or share the result. Built on **ShareX 21.0.0**, SunShot keeps the familiar menus and tools, with a compact toolbar and its own settings and updates.
-
-<p align="center">
-  <img src="assets/sunshot-main.png" width="895" alt="SunShot in dark mode, showing its capture toolbar, hotkeys and familiar side menu">
-</p>
 
 ## Get SunShot
 
