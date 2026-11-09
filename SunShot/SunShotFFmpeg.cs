@@ -30,7 +30,7 @@ namespace ShareX
             if (!File.Exists(executable))
             {
                 if (MessageBox.Show(Text(
-                    "Recording needs FFmpeg. Download it from ShareX's GitHub release now? It will be saved in SunShot's profile folder.",
+                    "FFmpeg is needed for recording. Download it from ShareX's GitHub release?",
                     "L’enregistrement nécessite FFmpeg. Le télécharger depuis la version GitHub de ShareX ? Il sera enregistré dans le dossier du profil SunShot."),
                     "SunShot - FFmpeg", MessageBoxButtons.OKCancel, MessageBoxIcon.Information) != DialogResult.OK) return false;
 
@@ -46,7 +46,7 @@ namespace ShareX
                     catch (Exception error)
                     {
                         DebugHelper.WriteException(error);
-                        MessageBox.Show(Text("FFmpeg could not be installed. Check your connection and folder permissions, then try again.",
+                        MessageBox.Show(Text("FFmpeg could not be installed. Check the connection and folder permissions, then try again.",
                             "Impossible d’installer FFmpeg. Vérifiez la connexion et les permissions du dossier, puis réessayez."),
                             "SunShot - FFmpeg", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }

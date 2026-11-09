@@ -88,7 +88,7 @@ namespace ShareX
             ImportPlan plan = new ImportPlan { Source = source, Destination = destination, SourceVersion = (string)appJson["ApplicationVersion"], HistoryRequested = importHistory };
             foreach (string field in new[] { "CustomHotkeysConfigPath", "CustomUploadersConfigPath" })
                 if (appJson[field]?.Type == JTokenType.String && !string.IsNullOrWhiteSpace((string)appJson[field]))
-                    plan.Warnings.Add(field + ": external config path was not followed. Only files in the selected profile folder are imported; an absent file uses SunShot defaults.");
+                    plan.Warnings.Add(field + ": external config path skipped; only the selected profile folder is imported.");
             ShareX22SettingsMigration migration = new ShareX22SettingsMigration(plan.Warnings, CreateSerializer());
             migration.Convert(appJson, typeof(ApplicationConfig), ConfigNames[0]);
 
@@ -210,7 +210,7 @@ namespace ShareX
             }
             catch (Exception error) when (error is IOException || error is InvalidDataException || error is ArgumentException || error is NotSupportedException || error is UnauthorizedAccessException)
             {
-                plan.Warnings.Add("Capture folder reuse was skipped: the source folder is missing, unsupported, linked, or overlaps the SunShot profile. SunShot's default capture folder will be used.");
+                plan.Warnings.Add("Capture folder reuse was skipped: folder unavailable or unsafe. SunShot's default folder will be used.");
                 return null;
             }
         }
@@ -241,7 +241,7 @@ namespace ShareX
             }
             options.OverrideCLIPath = false;
             options.CLIPath = "";
-            plan.Warnings.Add(location + ".CaptureSettings.FFmpegOptions: FFmpeg override within the source profile (or invalid path) cleared. Choose the existing ffmpeg.exe again in SunShot's recording options, or let SunShot download and verify its own copy.");
+            plan.Warnings.Add(location + ".CaptureSettings.FFmpegOptions: FFmpeg override cleared. Choose the existing ffmpeg.exe in SunShot recording options, or download a new copy.");
         }
 
         private static JObject ReadConfig(string path)
@@ -256,7 +256,7 @@ namespace ShareX
             if (reader.Read()) throw new InvalidDataException("A settings file contains extra data after its JSON object.");
             if (!Version.TryParse((string)json["ApplicationVersion"], out Version version) || version.Build > 0 || version.Revision > 0 ||
                 !((version.Major == 21 && version.Minor == 0) || (version.Major == 22 && version.Minor >= 0 && version.Minor <= 4)))
-                throw new InvalidDataException("This importer supports ShareX 21.0 and 22.0 through 22.4 release settings only. Other versions must first be checked for compatibility.");
+                throw new InvalidDataException("Supported ShareX versions: 21.0 and 22.0 through 22.4.");
             ImportImageEffectsBinder effects = new ImportImageEffectsBinder();
             foreach (JProperty metadata in json.Descendants().OfType<JProperty>().Where(x => x.Name.StartsWith("$", StringComparison.Ordinal)))
             {
@@ -275,7 +275,7 @@ namespace ShareX
         {
             Version version = Version.Parse((string)json["ApplicationVersion"]), source = Version.Parse(plan.SourceVersion);
             if (version.Major != source.Major || version.Minor != source.Minor)
-                plan.Warnings.Add(file + ": version differs from ApplicationConfig.json; each file is converted using its own supported version. Review the combined workflows and destinations.");
+                plan.Warnings.Add(file + ": version differs from ApplicationConfig.json; converted separately.");
         }
 
         private sealed class ImportImageEffectsBinder : ISerializationBinder
@@ -495,7 +495,7 @@ namespace ShareX
                 ValidateRegularTarget(Path.Combine(backup, name + ".absent"));
                 ValidateRegularTarget(Path.Combine(backup, name + ".restore"));
                 if (File.Exists(Path.Combine(backup, name + ".original")) == File.Exists(Path.Combine(backup, name + ".absent")))
-                    throw new InvalidDataException("An import backup is incomplete. Restore the settings from its Backup folder before opening SunShot.");
+                    throw new InvalidDataException("Import backup is incomplete. Restore the Backup folder before opening SunShot.");
             }
             string historyBackup = Path.Combine(backup, "History.db.original");
             if (history && File.Exists(historyBackup)) ShareXHistoryImportService.ValidateBackup(historyBackup);
@@ -564,7 +564,7 @@ namespace ShareX
                         FileSystemInfo entry = (attributes & FileAttributes.Directory) != 0
                             ? new DirectoryInfo(current) : new FileInfo(current);
                         if (entry.LinkTarget != null)
-                            throw new InvalidDataException("Profile files and folders cannot be symbolic links or junctions. Select the real local profile folder instead of an alias.");
+                            throw new InvalidDataException("Select the real local profile folder, not a link or junction.");
                     }
                 }
                 catch (FileNotFoundException) { }

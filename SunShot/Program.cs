@@ -299,14 +299,14 @@ namespace ShareX
                     {
                         if (MultiInstance && ShareXSettingsImportService.HasPendingImport(PersonalFolder))
                         {
-                            MessageBox.Show("A settings import is pending. Open SunShot without the multi-instance flag to restore it safely.",
+                            MessageBox.Show("Import recovery is pending. Restart SunShot without the multi-instance flag.",
                                 AppName, MessageBoxButtons.OK, MessageBoxIcon.Information);
                             return;
                         }
                         try { ShareXSettingsImportService.RecoverPendingImport(PersonalFolder); }
                         catch
                         {
-                            MessageBox.Show("SunShot could not restore an interrupted settings import. Close any program locking the profile files, then try again. Your original settings remain in the profile's Backup folder.",
+                            MessageBox.Show("Import recovery failed. Close programs using the profile files, then try again. The backup is in the profile folder.",
                                 AppName, MessageBoxButtons.OK, MessageBoxIcon.Error);
                             return;
                         }

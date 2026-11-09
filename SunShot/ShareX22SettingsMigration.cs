@@ -33,7 +33,7 @@ namespace ShareX
             if (Version.Parse((string)json["ApplicationVersion"]).Major != 22) return;
             if (type == typeof(ApplicationConfig))
             {
-                Warn("ShareX 22: compatible common settings are imported. Native recording/audio/camera, new image encoding options, themes and newer tools may need reconfiguration. Details follow; values and credentials are never included in this report.");
+                Warn("ShareX 22 settings imported where supported. Native recording, themes and newer tools need review.");
                 json["UseSecondaryUploaders"] = false;
                 json["SecondaryImageUploaders"] = new JArray();
                 json["SecondaryTextUploaders"] = new JArray();
@@ -68,7 +68,7 @@ namespace ShareX
                             throw new System.IO.InvalidDataException("Region magnifier settings have an invalid type or value.");
                         region["MagnifierPixelSize"] = Math.Clamp((int)Math.Round((double)size / pixels), 3, 30);
                         region.Remove("MagnifierSize");
-                        Warn(path + ".CaptureSettings.RegionCaptureOptions.MagnifierSize: approximated using SunShot's magnifier pixel size.");
+                        Warn(path + ".CaptureSettings.RegionCaptureOptions.MagnifierSize: approximated using SunShot magnifier size.");
                     }
                 }
                 if (capture["ScreenRecordStartDelayEnabled"] != null)
@@ -79,7 +79,7 @@ namespace ShareX
                     capture.Remove("ScreenRecordStartDelayEnabled");
                 }
                 capture["ScreenRecordAutoStart"] = false;
-                Warn(path + ".CaptureSettings: recording requires manual start; native 22 audio/camera settings are not converted to FFmpeg devices. Review recording options.");
+                Warn(path + ".CaptureSettings: recording needs manual start; native audio and camera settings were skipped. Review recording options.");
             }
             if (task["ToolsSettings"] is JObject tools)
             {
@@ -89,14 +89,14 @@ namespace ShareX
                     Copy(picker, "FormatCtrl", tools, "ScreenColorPickerFormatCtrl");
                     Copy(picker, "InfoText", tools, "ScreenColorPickerInfoText");
                     foreach (string mapped in new[] { "Format", "FormatCtrl", "InfoText" }) picker.Remove(mapped);
-                    if (picker.HasValues) Warn(path + ".ToolsSettings.ScreenColorPickerOptions: display options ignored; format strings retained.");
+                    if (picker.HasValues) Warn(path + ".ToolsSettings.ScreenColorPickerOptions: display options skipped; formats kept.");
                     tools.Remove("ScreenColorPickerOptions");
                 }
                 if (tools["ColorPickerOptions"] is JToken colors)
                 {
                     JObject surface = (task["CaptureSettings"] as JObject)?["SurfaceOptions"] as JObject;
                     if (surface != null) { surface["ColorPickerOptions"] = colors.DeepClone(); tools.Remove("ColorPickerOptions"); }
-                    else Warn(path + ".ToolsSettings.ColorPickerOptions: picker UI preferences ignored (no capture section).");
+                    else Warn(path + ".ToolsSettings.ColorPickerOptions: picker display options skipped.");
                 }
             }
 
@@ -107,7 +107,7 @@ namespace ShareX
             {
                 if (task[destination.Item1] != null && !KnownEnum(task[destination.Item1], destination.Item2))
                 {
-                    Warn(path + "." + destination.Item1 + ": unsupported destination; this workflow's upload destinations are blocked until configured. No fallback uploader will be used.");
+                    Warn(path + "." + destination.Item1 + ": unsupported destination; configure this workflow before uploading.");
                     blocked = true;
                 }
             }
@@ -119,7 +119,7 @@ namespace ShareX
                     if (identifier != null && !UploaderFactory.AllGenericUploaderServices.Any(x => x.ServiceIdentifier.Equals(identifier, StringComparison.OrdinalIgnoreCase)))
                     {
                         blocked = true;
-                        Warn(path + ".UploadSettings.UploaderFilters: unsupported provider filter; this workflow's destinations are blocked until configured.");
+                        Warn(path + ".UploadSettings.UploaderFilters: unsupported provider filter; configure this workflow before uploading.");
                     }
                 }
                 if (blocked) filters.Clear();
@@ -193,7 +193,7 @@ namespace ShareX
                     JsonProperty member = objectContract.Properties.GetClosestMatchProperty(property.Name);
                     if (member == null || member.Ignored || !member.Writable)
                     {
-                        Warn(path + "." + SafeName(property.Name) + ": unsupported setting ignored (SunShot default retained where applicable).");
+                        Warn(path + "." + SafeName(property.Name) + ": unsupported setting skipped; SunShot default kept where applicable.");
                         property.Remove();
                         continue;
                     }

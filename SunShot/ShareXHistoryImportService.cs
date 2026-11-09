@@ -20,7 +20,7 @@ namespace ShareX
         private const long MaximumText = 32L * 1024 * 1024;
         private const int MaximumRows = 50000;
         private const int MaximumField = 65536;
-        private const string SourceError = "ShareX history could not be safely read. Close ShareX and any database tools, then retry. History must be intact and within the import limits (50,000 records, 128 MiB database and journal, 32 million text characters). Or clear Import capture history to import settings only.";
+        private const string SourceError = "ShareX history could not be safely read. Close ShareX or database tools and retry, or clear Import capture history.";
         private const string DestinationError = "SunShot history is busy or has database sidecar files. Close its history windows and database tools, then restart SunShot before retrying. No sidecar files were removed.";
         private static readonly string[] Fields = { "FileName", "FilePath", "DateTime", "Type", "Host", "URL", "ThumbnailURL", "DeletionURL", "ShortenedURL", "Tags" };
         private const string Schema = @"CREATE TABLE History (
@@ -93,7 +93,7 @@ Type TEXT, Host TEXT, URL TEXT, ThumbnailURL TEXT, DeletionURL TEXT, ShortenedUR
             ShareXSettingsImportService.ValidateRegularTarget(legacy);
             if (!File.Exists(database) && !File.Exists(legacy))
             {
-                warnings.Add("No ShareX history file was found; existing SunShot history will be kept.");
+                warnings.Add("No ShareX history found. SunShot history was kept.");
                 return null;
             }
             try
@@ -352,14 +352,14 @@ Type TEXT, Host TEXT, URL TEXT, ThumbnailURL TEXT, DeletionURL TEXT, ShortenedUR
             }
             if (reader.TokenType != JsonToken.EndArray || reader.Read()) throw new InvalidDataException(SourceError);
             AddWarnings(warnings, invalid, clearedPaths, clearedUrls);
-            warnings.Add("Legacy ShareX history was read; original files will stay in place.");
+            warnings.Add("Legacy ShareX history imported. Original files stay in place.");
             return new Payload(rows);
         }
 
         private static void AddWarnings(List<string> warnings, int invalid, int paths, int urls)
         {
             if (invalid > 0) warnings.Add($"History: skipped {invalid} invalid records (date or tags).");
-            if (paths > 0) warnings.Add($"History: cleared unsupported local paths in {paths} records; valid URLs and other fields were retained.");
+            if (paths > 0) warnings.Add($"History: cleared local paths in {paths} records.");
             if (urls > 0) warnings.Add($"History: cleared unsupported URLs in {urls} records.");
         }
 
@@ -424,7 +424,7 @@ Type TEXT, Host TEXT, URL TEXT, ThumbnailURL TEXT, DeletionURL TEXT, ShortenedUR
             }
             catch (Exception error) when (error is IOException || error is SqliteException || error is InvalidDataException)
             {
-                throw new InvalidDataException("The saved history backup is damaged or unsupported. No profile files were restored; keep the backup and pending import journal for recovery.");
+                throw new InvalidDataException("The history backup is damaged. Keep the backup and retry recovery.");
             }
             finally
             {

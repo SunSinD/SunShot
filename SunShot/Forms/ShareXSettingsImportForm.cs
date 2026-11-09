@@ -57,8 +57,8 @@ namespace ShareX
                 Dock = DockStyle.Fill,
                 Margin = new Padding(0, 0, 0, 14),
                 Text = Localize(
-                    "Copy settings from a ShareX 21.0 or 22.0–22.4 profile. ShareX files and Windows integration remain untouched. Close ShareX before importing so its settings are up to date.",
-                    "Copiez les paramètres d’un profil ShareX 21.0 ou 22.0–22.4. Les fichiers et l’intégration Windows de ShareX restent intacts. Fermez ShareX avant l’importation pour enregistrer ses derniers paramètres.")
+                    "Copy settings from a ShareX 21.0 or 22.0–22.4 profile. Close ShareX first.",
+                    "Copiez les paramètres d’un profil ShareX 21.0 ou 22.0–22.4. Fermez ShareX avant de commencer.")
             };
             layout.Controls.Add(introduction, 0, 0);
             layout.SetColumnSpan(introduction, 2);
@@ -112,14 +112,8 @@ namespace ShareX
                 AutoSize = true,
                 Dock = DockStyle.Fill,
                 Text = Localize(
-                    "Imports capture settings, workflows, hotkeys and upload destinations, including credentials. Missing optional files use defaults; external config paths are skipped. Windows integration stays separate.\r\n\r\n" +
-                    "History is merged without moving images or removing existing entries. Reusing the screenshot folder allows new captures to be saved there.\r\n\r\n" +
-                    "Hotkeys, uploads, automatic actions, deletion, AI and watch folders start disabled. ShareX 22 themes, recording and newer tools have limitations. Review the report before applying.\r\n\r\n" +
-                    "SunShot backs up current settings and history under Backup, then restarts. Backups may contain credentials. Nothing is read until you confirm.",
-                    "Importe captures, tâches, raccourcis et destinations, avec les identifiants. Les fichiers facultatifs absents utilisent les valeurs par défaut. Les chemins externes et l’intégration Windows sont exclus.\r\n\r\n" +
-                    "L’historique est fusionné sans déplacer les images ni supprimer les entrées existantes. Réutiliser le dossier permet d’y enregistrer de nouvelles captures.\r\n\r\n" +
-                    "Raccourcis, envois, actions automatiques, suppression, IA et dossiers surveillés sont désactivés. Les thèmes, l’enregistrement et les nouveaux outils de ShareX 22 ont des limites. Vérifiez le rapport avant d’appliquer.\r\n\r\n" +
-                    "SunShot sauvegarde les paramètres et l’historique dans Backup, puis redémarre. Les sauvegardes peuvent contenir des identifiants. Aucun fichier n’est lu avant confirmation.")
+                    "Settings, hotkeys and upload destinations are imported. Hotkeys, uploads, automatic actions, AI and watch folders start off. A backup is saved before SunShot restarts; it may contain credentials.",
+                    "Les paramètres, raccourcis et destinations sont importés. Les raccourcis, envois, actions automatiques, IA et dossiers surveillés sont désactivés. Une sauvegarde est créée avant le redémarrage; elle peut contenir des identifiants.")
             };
             layout.Controls.Add(explanation, 0, 4);
             layout.SetColumnSpan(explanation, 2);
@@ -150,8 +144,8 @@ namespace ShareX
                 return;
             }
             if (MessageBox.Show(this, Localize(
-                "Read the selected ShareX profile and prepare an import preview? You will review the limitations before replacing any SunShot settings.",
-                "Lire le profil ShareX sélectionné et préparer un aperçu ? Vous pourrez vérifier les limites avant de remplacer les paramètres SunShot."),
+                    "Read the selected ShareX profile and prepare the import preview?",
+                    "Lire le profil ShareX sélectionné et préparer l’aperçu de l’importation ?"),
                 Text, MessageBoxButtons.OKCancel, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) != DialogResult.OK) return;
 
             importButton.Enabled = false;
@@ -189,14 +183,14 @@ namespace ShareX
                 }
                 string backup = ShareXSettingsImportService.Apply(plan);
                 string result = Localize(
-                    $"Imported ShareX {plan.SourceVersion} settings and {plan.HotkeyCount} hotkey definitions ({(plan.HasHotkeys ? "imported" : "defaults, file absent")}). Upload destinations: {(plan.HasUploaders ? "imported" : "defaults (file absent)")}.\r\n\r\nReview your settings first. To enable hotkeys, choose Enable hotkeys in the tray menu. To enable uploading, clear DisableUpload in Application settings > Advanced.\r\n\r\nBackup: {backup}",
-                    $"Paramètres ShareX {plan.SourceVersion} et {plan.HotkeyCount} raccourcis ({(plan.HasHotkeys ? "importés" : "par défaut, fichier absent")}). Destinations : {(plan.HasUploaders ? "importées" : "par défaut (fichier absent)")}.\r\n\r\nVérifiez vos paramètres. Pour activer les raccourcis, choisissez Activer les raccourcis clavier dans le menu de notification. Pour activer l’envoi, décochez DisableUpload dans Paramètres de l’application > Avancé.\r\n\r\nSauvegarde : {backup}");
+                    $"ShareX {plan.SourceVersion}: {plan.HotkeyCount} hotkeys and {(plan.HasUploaders ? "upload destinations" : "default upload settings")} imported. Hotkeys and uploads are off. Backup: {backup}",
+                    $"ShareX {plan.SourceVersion} : {plan.HotkeyCount} raccourcis et {(plan.HasUploaders ? "destinations" : "paramètres de destination par défaut")} importés. Les raccourcis et envois sont désactivés. Sauvegarde : {backup}");
                 if (plan.HasHistory)
-                    result += Localize("\r\n\r\nCapture history merged. Existing entries were kept and duplicates skipped. Original images stay in place.",
-                        "\r\n\r\nHistorique fusionné. Les entrées existantes sont conservées et les doublons ignorés. Les images d’origine restent en place.");
+                    result += Localize("\r\n\r\nCapture history merged. Duplicates were skipped.",
+                        "\r\n\r\nHistorique fusionné. Les doublons ont été ignorés.");
                 else if (plan.HistoryRequested)
-                    result += Localize("\r\n\r\nNo capture history was imported. Your existing SunShot history is unchanged.",
-                        "\r\n\r\nAucun historique n’a été importé. Votre historique SunShot existant reste intact.");
+                    result += Localize("\r\n\r\nNo capture history was imported.",
+                        "\r\n\r\nAucun historique n’a été importé.");
                 if (plan.ReusesCaptureFolder)
                     result += Localize($"\r\n\r\nNew captures will use: {plan.CaptureFolder}", $"\r\n\r\nDossier des nouvelles captures : {plan.CaptureFolder}");
                 if (plan.UnreadableCredentials > 0)
@@ -227,11 +221,11 @@ namespace ShareX
                 string message = Localize("Import failed. ", "L’importation a échoué. ") +
                     (error is InvalidDataException || error is DirectoryNotFoundException ? error.Message : Localize("Check the folder and file permissions, then try again.", "Vérifiez le dossier et les permissions des fichiers, puis réessayez."));
                 if (needsRecovery) message += Localize(
-                    "\r\nSunShot must close to protect your settings. Close any program locking the profile files before reopening SunShot. The pending import will be rolled back at startup.",
-                    "\r\nSunShot doit se fermer pour protéger vos paramètres. Fermez les programmes qui bloquent les fichiers avant de rouvrir SunShot. L’importation sera annulée au prochain démarrage.");
+                    "\r\nSunShot must close. Close programs using the profile files, then reopen it. The import will be rolled back.",
+                    "\r\nSunShot doit se fermer. Fermez les programmes qui utilisent le profil, puis rouvrez-le. L’importation sera annulée.");
                 if (historyUnavailable) message += Localize(
-                    "\r\nSunShot could not reopen its history and must close. Close any program locking the history file, then reopen SunShot.",
-                    "\r\nSunShot n’a pas pu rouvrir son historique et doit se fermer. Fermez les programmes qui bloquent ce fichier, puis rouvrez SunShot.");
+                    "\r\nSunShot could not reopen its history. Close programs using the history file, then reopen it.",
+                     "\r\nSunShot n’a pas pu rouvrir son historique. Fermez les programmes qui utilisent le fichier, puis rouvrez-le.");
                 MessageBox.Show(this, message, Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
                 if (needsRecovery || historyUnavailable) { Close(); Application.Exit(); }
                 else importButton.Enabled = true;
@@ -249,19 +243,19 @@ namespace ShareX
                 MinimizeBox = false, MaximizeBox = false, ShowInTaskbar = false
             };
             string summary = Localize(
-                $"ShareX {plan.SourceVersion}; {plan.HotkeyCount} hotkey definitions ({(plan.HasHotkeys ? "imported" : "defaults, file absent")}). Upload destinations: {(plan.HasUploaders ? "imported" : "defaults (file absent)")}.\r\n\r\nHotkeys, uploads, automatic actions/deletion/AI and watch folders will be disabled. Settings stay in SunShot's own profile. A backup will be kept.\r\n\r\n",
-                $"ShareX {plan.SourceVersion}; {plan.HotkeyCount} raccourcis ({(plan.HasHotkeys ? "importés" : "par défaut, fichier absent")}). Destinations : {(plan.HasUploaders ? "importées" : "par défaut (fichier absent)")}.\r\n\r\nLes raccourcis, l’envoi, les actions automatiques, la suppression, l’IA et les dossiers surveillés seront désactivés. Les paramètres restent dans le profil SunShot. Une sauvegarde sera conservée.\r\n\r\n");
+                 $"ShareX {plan.SourceVersion}; {plan.HotkeyCount} hotkeys ({(plan.HasHotkeys ? "imported" : "defaults")}). Upload destinations: {(plan.HasUploaders ? "imported" : "defaults")}. Hotkeys, uploads, automatic actions and watch folders will be off.\r\n\r\n",
+                 $"ShareX {plan.SourceVersion} ; {plan.HotkeyCount} raccourcis ({(plan.HasHotkeys ? "importés" : "par défaut")}). Destinations : {(plan.HasUploaders ? "importées" : "par défaut")}. Les raccourcis, envois, actions automatiques et dossiers surveillés seront désactivés.\r\n\r\n");
             summary += plan.HasHistory ? Localize(
-                $"History: {plan.HistoryCount} valid source entries will be merged with your SunShot history. Duplicates are skipped. File paths and URLs are preserved; images are not moved or copied. Editing or deleting an original file through history still affects that file.\r\n\r\n",
-                $"Historique : {plan.HistoryCount} entrées valides seront fusionnées avec l’historique SunShot. Les doublons sont ignorés. Les chemins et les URL sont conservés; les images ne sont ni déplacées ni copiées. Modifier ou supprimer un fichier depuis l’historique agit toujours sur l’original.\r\n\r\n") : Localize(
+                $"History: {plan.HistoryCount} entries will be merged. Duplicates are skipped; original paths stay in the records.\r\n\r\n",
+                $"Historique : {plan.HistoryCount} entrées seront fusionnées. Les doublons sont ignorés; les chemins d’origine restent dans les entrées.\r\n\r\n") : Localize(
                 "Capture history will not change.\r\n\r\n", "L’historique ne sera pas modifié.\r\n\r\n");
             summary += plan.ReusesCaptureFolder ? Localize(
-                $"New captures will be written to: {plan.CaptureFolder}\r\nExisting captures stay in place. Unique filenames prevent overwriting them.\r\n\r\n",
-                $"Les nouvelles captures seront enregistrées dans : {plan.CaptureFolder}\r\nLes captures existantes restent en place. Des noms uniques évitent de les remplacer.\r\n\r\n") : Localize(
+                $"New captures: {plan.CaptureFolder}\r\n\r\n",
+                $"Nouvelles captures : {plan.CaptureFolder}\r\n\r\n") : Localize(
                 "New captures will use SunShot's screenshots folder.\r\n\r\n", "Les nouvelles captures utiliseront le dossier SunShot.\r\n\r\n");
             if (plan.UnreadableCredentials > 0) summary += Localize(
-                $"{plan.UnreadableCredentials} unreadable credentials will be cleared. Reconnect those accounts.\r\n\r\n",
-                $"{plan.UnreadableCredentials} identifiants illisibles seront effacés. Reconnectez ces comptes.\r\n\r\n");
+                $"{plan.UnreadableCredentials} credentials could not be read and will be cleared. Reconnect those accounts.\r\n\r\n",
+                $"{plan.UnreadableCredentials} identifiants n’ont pas pu être lus et seront effacés. Reconnectez ces comptes.\r\n\r\n");
             summary += plan.Warnings.Count == 0 ? Localize("No additional compatibility limitations reported.", "Aucune autre limite de compatibilité signalée.") :
                 Localize($"Compatibility report ({plan.Warnings.Count} notices):\r\n", $"Rapport de compatibilité ({plan.Warnings.Count} avis; détails techniques en anglais) :\r\n") + string.Join("\r\n\r\n", plan.Warnings);
             TextBox report = new TextBox {
