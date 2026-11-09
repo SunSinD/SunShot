@@ -136,8 +136,8 @@ namespace ShareX
                 "La destination de téléversement « {0} » n'est pas encore configurée, donc rien n'a été téléversé.\r\n\r\nOuvrir les paramètres de destination maintenant ?" },
             ["DontAskSession"] = new[] { "Don't ask again until SunShot is restarted", "Ne plus demander jusqu'au redémarrage de SunShot" },
             ["SaveFailed"] = new[] { "The file could not be saved.", "Le fichier n'a pas pu être enregistré." },
-            ["BackupExported"] = new[] { "Backup saved. To restore it, close SunShot, keep a copy of your profile, then extract the .sxb files into the SunShot profile folder.",
-                "Sauvegarde enregistrée. Pour la restaurer, fermez SunShot, gardez une copie de votre profil, puis extrayez les fichiers .sxb dans le dossier de profil SunShot." }
+            ["BackupExported"] = new[] { "Backup saved. To restore it, close SunShot, keep a copy of your profile, then unzip the .sxb file into the SunShot profile folder.",
+                "Sauvegarde enregistrée. Pour la restaurer, fermez SunShot, gardez une copie de votre profil, puis décompressez le fichier .sxb dans le dossier de profil SunShot." }
         };
     }
 }

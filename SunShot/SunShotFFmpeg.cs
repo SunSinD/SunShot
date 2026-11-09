@@ -31,7 +31,7 @@ namespace ShareX
             {
                 if (MessageBox.Show(Text(
                     "FFmpeg is needed for recording. Download it from ShareX's GitHub release?",
-                    "L’enregistrement nécessite FFmpeg. Le télécharger depuis la version GitHub de ShareX ? Il sera enregistré dans le dossier du profil SunShot."),
+                    "FFmpeg est nécessaire pour enregistrer. Le télécharger depuis la version GitHub de ShareX ?"),
                     "SunShot - FFmpeg", MessageBoxButtons.OKCancel, MessageBoxIcon.Information) != DialogResult.OK) return false;
 
                 bool installed = false;

@@ -306,7 +306,7 @@ namespace ShareX
                         try { ShareXSettingsImportService.RecoverPendingImport(PersonalFolder); }
                         catch
                         {
-                            MessageBox.Show("Import recovery failed. Close programs using the profile files, then try again. The backup is in the profile folder.",
+                            MessageBox.Show("Import recovery failed. Close programs using the profile files, then try again. The backup is in the profile's Backup folder.",
                                 AppName, MessageBoxButtons.OK, MessageBoxIcon.Error);
                             return;
                         }

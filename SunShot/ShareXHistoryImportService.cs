@@ -359,7 +359,7 @@ Type TEXT, Host TEXT, URL TEXT, ThumbnailURL TEXT, DeletionURL TEXT, ShortenedUR
         private static void AddWarnings(List<string> warnings, int invalid, int paths, int urls)
         {
             if (invalid > 0) warnings.Add($"History: skipped {invalid} invalid records (date or tags).");
-            if (paths > 0) warnings.Add($"History: cleared local paths in {paths} records.");
+            if (paths > 0) warnings.Add($"History: cleared unsupported local paths in {paths} records.");
             if (urls > 0) warnings.Add($"History: cleared unsupported URLs in {urls} records.");
         }
 
