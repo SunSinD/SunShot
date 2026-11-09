@@ -1,4 +1,4 @@
-SunShot 0.1.1
+SunShot 0.1.2
 Copyright (c) 2026 SunSinD
 
 Based on ShareX 21.0.0 (commit d2502561).

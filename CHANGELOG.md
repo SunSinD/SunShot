@@ -1,5 +1,16 @@
 # Changes
 
+## 0.1.2 (2026-11-09)
+
+### Added
+
+- Allow installation and runtime support on Windows 10 version 2004 (build 19041) and newer.
+- Explain ShareX FFmpeg and recording-device compatibility during settings import.
+
+### Fixed
+
+- Guard the Windows 11-only window-corner customization while retaining the newer Windows SDK for compilation.
+
 ## 0.1.1 (2026-11-08)
 
 ### Added

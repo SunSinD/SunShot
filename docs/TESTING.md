@@ -29,7 +29,7 @@ Hardware encoders, every upload provider, multi-monitor HDR/DPI combinations, sc
 
 ## 0.1.0 checks
 
-- Release x64 publish and installer compilation succeeded on Windows 11.
+- Release x64 publish and installer compilation succeeded on the Windows 10-compatible target.
 - The dependency audit reported no known vulnerable packages at the time of the check.
 - The regression harness passed 30 assertions covering native SQLite, valid/invalid FFmpeg archives, an eight-second file write, empty files, queued watcher callbacks after disposal or replacement, filtered upload destinations and cancellation, and isolated temporary-folder cleanup. The valid-archive check uses the optional archive path argument.
 - A one-off UI harness passed 32 logic assertions and rendered the real MainForm in English/French and light/dark themes at widths from 650 to 1200 pixels. These were offscreen checks at 100% scaling; the temporary harness is not part of the source archive.
@@ -51,3 +51,9 @@ Hardware encoders, every upload provider, multi-monitor HDR/DPI combinations, sc
 - A separate temporary harness used the actual import and review forms in English and French. Labels and review buttons fit at the default size, the compatibility report was read-only with vertical scrolling, and Cancel left the destination uncreated. These checks used synthetic settings and did not apply an import.
 - Read-only preparation of a preserved ShareX 22.4 profile succeeded with three hotkey definitions. All inspected source JSON hashes stayed unchanged, and no destination was created. That profile was not applied to the user's installed SunShot.
 - The checked-in 22.x fixtures are synthetic JSON with property and enum inventories traced to each upstream release commit. They are not runtime exports from upstream ShareX. Real provider logins, every nested editor option and all combinations of 22.x preferences still need wider testing.
+
+## 0.1.2 checks
+
+- Release x64 build with the CA1416 platform-compatibility analyzer enabled succeeded with no CA1416 warnings. The existing build reported seven unrelated WinForms and cryptography obsolescence warnings.
+- The dependency audit reported no known vulnerable packages at check time.
+- Regression passed 38 assertions. CoreChecks passed 458 checks, including synthetic ShareX 21 FFmpeg video/audio source retention, source-profile FFmpeg path clearing, and the new user guidance warning. No real ShareX or SunShot profile was used.
