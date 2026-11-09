@@ -1,4 +1,4 @@
-﻿# Third-party software
+# Third-party software
 
 SunShot is based on ShareX 21.0.0. Original notices and licenses are in the source files, `LICENSE.txt` and `Licenses`.
 
@@ -12,4 +12,6 @@ FFmpeg is downloaded on request, not included in SunShot packages. SunShot pins 
 1838932e32f01e0e7b65fde5ca0ebb2ab131cb6a9ff1a84025ee5b784075576c
 ```
 
-The downloaded tool stays separate and can be replaced through the custom FFmpeg path option. Release source archives include the source, notices and build scripts for that version. `SHA256SUMS.txt` covers the installer, portable ZIP and source ZIP.
+That build (`n8.1.1-7-g3728de467d-20260519`) is GPL-3.0. Its [source](https://github.com/FFmpeg/FFmpeg/tree/3728de467d), [build scripts](https://github.com/ShareX/FFmpeg-Builds) and [upstream build instructions](https://github.com/BtbN/FFmpeg-Builds) belong to their projects. You can use a different ffmpeg.exe through the custom FFmpeg path option.
+
+Release source archives include the source, notices and build scripts for that version. `SHA256SUMS.txt` covers the installer, portable ZIP and source ZIP.

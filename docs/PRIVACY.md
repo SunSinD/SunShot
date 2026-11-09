@@ -1,4 +1,4 @@
-﻿# Privacy
+# Privacy
 
 Captures, editing, clipboard actions and history stay on your computer unless you choose an upload or online tool. SunShot has no ads or analytics.
 

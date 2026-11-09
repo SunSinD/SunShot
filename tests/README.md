@@ -1,4 +1,4 @@
-﻿# SunShot checks
+# SunShot checks
 
 Windows 10 version 2004 (build 19041) or newer and the .NET 10 SDK are required.
 

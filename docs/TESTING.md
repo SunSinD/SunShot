@@ -1,4 +1,4 @@
-﻿# Testing
+# Testing
 
 Build and test on Windows with the .NET 10 SDK:
 

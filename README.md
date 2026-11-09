@@ -1,37 +1,53 @@
-﻿# SunShot
+<img src="assets/sunshot.png" width="64" alt="SunShot logo">
 
-A screen capture and recording app for Windows, based on ShareX 21.0.0.
+# SunShot
 
-**[Download the latest release](https://github.com/SunSinD/SunShot/releases/latest)**
-Windows 10 version 2004 (build 19041) or newer, x64. The .NET runtime is included.
+A clean screen capture and recording app for Windows.
 
-## Features
+**[Download the latest release](https://github.com/SunSinD/SunShot/releases/latest)**<br><sub>Windows 10 version 2004 or newer, x64. The .NET runtime is included.</sub>
 
-- Capture regions, windows, full screens and scrolling pages.
-- Record video or GIFs with FFmpeg.
-- Annotate with text, shapes, arrows and blur.
-- Use hotkeys, capture history and task settings.
-- Choose light or dark themes, with French translation.
+Coming from ShareX? [Bring your settings with you](#moving-from-sharex).
 
-New profiles copy and save captures locally. Uploading and automatic update checks start off.
+Capture your screen, annotate it, then copy, save or share it. SunShot is built on **ShareX 21.0.0**, with the same menus and tools, a compact toolbar and its own settings and updates.
 
 ## Download
 
-- **Installer:** run the `.exe`, then open SunShot.
-- **Portable:** extract the `.zip` and open `SunShot.exe`. Keep the folder together.
+| Package | Getting started |
+| --- | --- |
+| **Installer** (`.exe`) | Run it, then open SunShot. |
+| **Portable** (`.zip`) | Extract it and open `SunShot.exe`. Keep the folder together. |
 
-Downloads are unsigned. Windows may show a publisher warning.
+See [what's new](CHANGELOG.md).
+
+> SunShot is an early beta. Downloads are unsigned, so Windows may show a publisher warning.
+
+## Features
+
+- **Capture** regions, windows, full screens and scrolling pages.
+- **Record** video or GIFs. FFmpeg downloads the first time you need it.
+- **Edit** with arrows, text, shapes, blur and more.
+- **Keep your workflow** with hotkeys, capture history and task settings.
+- **Choose your look** with light and dark themes, in English or French.
+
+New profiles save captures locally. Uploading and automatic update checks are off until you turn them on. See the [privacy notes](docs/PRIVACY.md).
 
 ## Moving from ShareX
 
 1. Close ShareX.
-2. Choose **Import ShareX settings** in SunShot.
-3. Select the ShareX profile folder, usually `Documents\ShareX`.
-4. Review the report, choose the history and capture-folder options, then import.
+2. In SunShot, choose **Import ShareX settings**.
+3. Select your ShareX profile folder, usually `Documents\ShareX`.
+4. Read the report, then import. SunShot backs up its profile and restarts.
 
-SunShot backs up its current profile and restarts. ShareX 21.0 and 22.0 through 22.4 are supported. See the [migration guide](docs/MIGRATION.md) for details.
+Works with ShareX 21.0 and 22.0 to 22.4. You can import your capture history and keep saving to your ShareX screenshot folder. Hotkeys, uploads and watch folders start off so you can review them first.
 
-## Build
+See the [migration guide](docs/MIGRATION.md) for what carries over.
+
+## Contributing
+
+Bug reports, testing and C#/WinForms contributions are welcome. [Open an issue](https://github.com/SunSinD/SunShot/issues) for feedback. Development is AI-assisted.
+
+<details>
+<summary><b>Build from source</b></summary>
 
 Use the .NET 10 SDK on Windows:
 
@@ -39,10 +55,14 @@ Use the .NET 10 SDK on Windows:
 dotnet build SunShot/ShareX.csproj -c Release -p:Platform=x64 --self-contained true --source https://api.nuget.org/v3/index.json
 ```
 
-Package a clean checkout with `./build/Package.ps1`. See [testing](docs/TESTING.md) and [third-party software](docs/THIRD-PARTY.md).
+To package a clean, committed checkout, run `./build/Package.ps1`. It needs Inno Setup 6.5 or newer (or pass `-IsccPath`).
+
+See [testing](docs/TESTING.md) and [third-party software](docs/THIRD-PARTY.md).
+
+</details>
 
 ## Credits and license
 
-Based on [ShareX 21.0.0](https://github.com/ShareX/ShareX/tree/v21.0.0), by the ShareX team and contributors. SunShot is an independent project by **SunSinD**. Original notices and licenses are preserved.
+Based on [ShareX 21.0.0](https://github.com/ShareX/ShareX/tree/v21.0.0) by the ShareX team and contributors. SunShot is an independent project by **SunSinD** and is not affiliated with ShareX. Original notices, translations and third-party licenses are kept.
 
 Licensed under [GPL-3.0](LICENSE.txt).
