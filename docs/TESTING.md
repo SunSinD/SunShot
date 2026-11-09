@@ -57,3 +57,4 @@ Hardware encoders, every upload provider, multi-monitor HDR/DPI combinations, sc
 - Release x64 build with the CA1416 platform-compatibility analyzer enabled succeeded with no CA1416 warnings. The existing build reported seven unrelated WinForms and cryptography obsolescence warnings.
 - The dependency audit reported no known vulnerable packages at check time.
 - Regression passed 38 assertions. CoreChecks passed 458 checks, including synthetic ShareX 21 FFmpeg video/audio source retention, source-profile FFmpeg path clearing, and the new user guidance warning. No real ShareX or SunShot profile was used.
+- `build/Package.ps1` completed with Inno Setup 6.7.3 and produced the 0.1.2 installer, portable ZIP, source ZIP and SHA256SUMS.txt.
