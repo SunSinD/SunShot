@@ -139,7 +139,7 @@ namespace ShareX
                 (includeHistory.Checked && HasOpenHistoryViews()))
             {
                 MessageBox.Show(this, Localize(
-                    "Finish active tasks and close SunShot's History and Image history windows and other instances first. Import is unavailable in sandbox mode or with the multi-instance flag.",
+                    "Close active tasks, history windows and other SunShot instances before importing.",
                     "Terminez les tâches et fermez les fenêtres Historique et Historique des images ainsi que les autres instances SunShot. L’importation est indisponible en mode sandbox ou avec l’option multi-instance."), Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
@@ -163,7 +163,7 @@ namespace ShareX
                     sourcePath.Text, Program.PersonalFolder, includeHistory.Checked, reuseCaptureFolder.Checked);
                 if (!ConfirmPreparedImport(plan)) { importButton.Enabled = true; return; }
                 if (TaskManager.IsBusy || ScreenRecordManager.IsRecording || (plan.HasHistory && HasOpenHistoryViews()))
-                    throw new InvalidDataException(Localize("Finish active tasks and close the history windows before importing.", "Terminez les tâches et fermez les fenêtres d’historique avant l’importation."));
+                    throw new InvalidDataException(Localize("Close active tasks and history windows before importing.", "Fermez les tâches actives et les fenêtres d’historique avant l’importation."));
                 SettingManager.ValidateImportDestination();
                 if (hotkeys != null)
                 {
@@ -248,7 +248,7 @@ namespace ShareX
             summary += plan.HasHistory ? Localize(
                 $"History: {plan.HistoryCount} entries will be merged. Duplicates are skipped; original paths stay in the records.\r\n\r\n",
                 $"Historique : {plan.HistoryCount} entrées seront fusionnées. Les doublons sont ignorés; les chemins d’origine restent dans les entrées.\r\n\r\n") : Localize(
-                "Capture history will not change.\r\n\r\n", "L’historique ne sera pas modifié.\r\n\r\n");
+                "Capture history is unchanged.\r\n\r\n", "L’historique reste inchangé.\r\n\r\n");
             summary += plan.ReusesCaptureFolder ? Localize(
                 $"New captures: {plan.CaptureFolder}\r\n\r\n",
                 $"Nouvelles captures : {plan.CaptureFolder}\r\n\r\n") : Localize(
@@ -256,7 +256,7 @@ namespace ShareX
             if (plan.UnreadableCredentials > 0) summary += Localize(
                 $"{plan.UnreadableCredentials} credentials could not be read and will be cleared. Reconnect those accounts.\r\n\r\n",
                 $"{plan.UnreadableCredentials} identifiants n’ont pas pu être lus et seront effacés. Reconnectez ces comptes.\r\n\r\n");
-            summary += plan.Warnings.Count == 0 ? Localize("No additional compatibility limitations reported.", "Aucune autre limite de compatibilité signalée.") :
+            summary += plan.Warnings.Count == 0 ? Localize("No other compatibility notes.", "Aucune autre remarque de compatibilité.") :
                 Localize($"Compatibility report ({plan.Warnings.Count} notices):\r\n", $"Rapport de compatibilité ({plan.Warnings.Count} avis; détails techniques en anglais) :\r\n") + string.Join("\r\n\r\n", plan.Warnings);
             TextBox report = new TextBox {
                 Dock = DockStyle.Fill, Multiline = true, ReadOnly = true,

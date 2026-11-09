@@ -137,7 +137,7 @@ namespace ShareX
             ["DontAskSession"] = new[] { "Don't ask again until SunShot is restarted", "Ne plus demander jusqu'au redémarrage de SunShot" },
             ["SaveFailed"] = new[] { "The file could not be saved.", "Le fichier n'a pas pu être enregistré." },
             ["BackupExported"] = new[] { "Backup saved. To restore it, close SunShot, keep a copy of your profile, then extract the .sxb files into the SunShot profile folder.",
-                "Sauvegarde enregistrée. Ce fichier .sxb est une archive ZIP. SunShot ne la restaure pas automatiquement. Pour la restaurer manuellement, fermez SunShot, gardez une copie de votre profil actuel, puis extrayez les fichiers dans votre dossier de profil SunShot. L'importateur ShareX n'accepte pas les fichiers .sxb." }
+                "Sauvegarde enregistrée. Pour la restaurer, fermez SunShot, gardez une copie de votre profil, puis extrayez les fichiers .sxb dans le dossier de profil SunShot." }
         };
     }
 }

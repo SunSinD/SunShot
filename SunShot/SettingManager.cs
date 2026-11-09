@@ -379,7 +379,7 @@ namespace ShareX
         private static void ValidateImportDestinationCore()
         {
             if (!string.IsNullOrWhiteSpace(Settings.CustomHotkeysConfigPath) || !string.IsNullOrWhiteSpace(Settings.CustomUploadersConfigPath))
-                throw new InvalidDataException("SunShot currently uses external hotkey or uploader settings. Reset those config folders to SunShot's own profile in Application settings before importing, so the source files cannot be overwritten.");
+                throw new InvalidDataException("Reset external hotkey or uploader paths to SunShot's profile before importing.");
             string root = Path.GetFullPath(Program.PersonalFolder);
             foreach (string path in new[] { root, BackupFolder, ApplicationConfigFilePath, HotkeysConfigFilePath, UploadersConfigFilePath })
             {
@@ -400,7 +400,7 @@ namespace ShareX
                 string temporary = path + ".temp";
                 ShareXSettingsImportService.ValidateRegularTarget(temporary);
                 if (File.Exists(temporary))
-                    throw new InvalidDataException("A temporary SunShot settings file already exists. Close SunShot and move the .temp settings file out of its profile before retrying the import.");
+                    throw new InvalidDataException("A temporary settings file already exists. Close SunShot and remove it before retrying.");
             }
         }
 

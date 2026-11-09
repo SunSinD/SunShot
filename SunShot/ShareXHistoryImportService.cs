@@ -21,7 +21,7 @@ namespace ShareX
         private const int MaximumRows = 50000;
         private const int MaximumField = 65536;
         private const string SourceError = "ShareX history could not be safely read. Close ShareX or database tools and retry, or clear Import capture history.";
-        private const string DestinationError = "SunShot history is busy or has database sidecar files. Close its history windows and database tools, then restart SunShot before retrying. No sidecar files were removed.";
+        private const string DestinationError = "SunShot history is busy. Close history windows and database tools, then retry.";
         private static readonly string[] Fields = { "FileName", "FilePath", "DateTime", "Type", "Host", "URL", "ThumbnailURL", "DeletionURL", "ShortenedURL", "Tags" };
         private const string Schema = @"CREATE TABLE History (
 Id INTEGER PRIMARY KEY AUTOINCREMENT, FileName TEXT, FilePath TEXT, DateTime TEXT,
