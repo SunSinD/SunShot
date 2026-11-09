@@ -261,6 +261,7 @@ namespace ShareX.HelpersLib
 
         public static void SetWindowCornerPreference(IntPtr handle, DWM_WINDOW_CORNER_PREFERENCE cornerPreference)
         {
+            if (!Helpers.IsWindows11OrGreater()) return;
             int attrValue = (int)cornerPreference;
             DwmSetWindowAttribute(handle, (int)DWMWINDOWATTRIBUTE.DWMWA_WINDOW_CORNER_PREFERENCE, ref attrValue, sizeof(int));
         }

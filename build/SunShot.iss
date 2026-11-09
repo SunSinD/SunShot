@@ -5,7 +5,7 @@
   #error PackageDir is required
 #endif
 #ifndef AppVersion
-  #define AppVersion "0.1.1"
+  #define AppVersion "0.1.2"
 #endif
 
 [Setup]
@@ -24,7 +24,7 @@ DisableProgramGroupPage=yes
 PrivilegesRequired=lowest
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
-MinVersion=10.0.22621
+MinVersion=10.0.19041
 LicenseFile=..\LICENSE.txt
 SetupIconFile=..\SunShot\ShareX_Icon.ico
 UninstallDisplayIcon={app}\SunShot.exe

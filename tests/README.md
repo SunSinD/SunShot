@@ -1,6 +1,6 @@
 # SunShot core checks
 
-Windows 11 and the .NET 10 SDK are required. From the repository root:
+Windows 10 version 2004 (build 19041) or newer and the .NET 10 SDK are required. From the repository root:
 
 ```powershell
 dotnet run --project tests/SunShot.CoreChecks/SunShot.CoreChecks.csproj -c Release -p:Platform=x64 -p:RestoreSources=https://api.nuget.org/v3/index.json

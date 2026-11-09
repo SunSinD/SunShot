@@ -4,7 +4,7 @@
 
 A clean screen capture and recording app for Windows.
 
-**[Download the latest release](https://github.com/SunSinD/SunShot/releases/latest)**<br><sub>Windows 11 22H2 or newer, x64. The .NET runtime is included.</sub>
+**[Download the latest release](https://github.com/SunSinD/SunShot/releases/latest)**<br><sub>Windows 10 version 2004 (build 19041) or newer, x64. The .NET runtime is included.</sub>
 
 Coming from ShareX? [Bring your settings with you](#moving-from-sharex).
 
@@ -42,7 +42,7 @@ Read the [privacy notes](docs/PRIVACY.md) for details.
 3. Review the compatibility report, then import.
 4. SunShot backs up its current profile, copies the settings and restarts.
 
-**SunShot 0.1.1 accepts ShareX 21.0 and 22.0 through 22.4 settings.** The older 0.1.0 release supports ShareX 21.0 only.
+**SunShot 0.1.2 accepts ShareX 21.0 and 22.0 through 22.4 settings.** The older 0.1.0 release supports ShareX 21.0 only.
 
 - Your ShareX files are preserved. Capture history can be merged while leaving images in place, and you can keep saving new captures in your existing ShareX screenshot folder.
 - Common settings carry over. Newer tools, native recording and themes have limits explained in the report.
