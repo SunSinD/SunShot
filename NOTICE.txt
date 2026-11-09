@@ -1,12 +1,7 @@
-SunShot 0.1.2
+﻿SunShot 0.1.2
 Copyright (c) 2026 SunSinD
 
 Based on ShareX 21.0.0 (commit d2502561).
 Copyright (c) 2007-2026 ShareX Team and contributors.
 
-SunShot modifications began on 2026-11-08 and include branding, focused menus,
-settings import and isolation, updates, packaging, and selected bug fixes.
-The repository history records the individual changes.
-
-This is an independent project. Original source notices and third-party
-licenses are preserved. See LICENSE.txt and the Licenses folder.
+SunShot is an independent project. Original notices and third-party licenses are preserved in LICENSE.txt and Licenses.
