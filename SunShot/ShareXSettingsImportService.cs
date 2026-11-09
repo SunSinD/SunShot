@@ -241,7 +241,7 @@ namespace ShareX
             }
             options.OverrideCLIPath = false;
             options.CLIPath = "";
-            plan.Warnings.Add(location + ".CaptureSettings.FFmpegOptions: FFmpeg override within the source profile (or invalid path) cleared; SunShot's own recorder path will be used.");
+            plan.Warnings.Add(location + ".CaptureSettings.FFmpegOptions: FFmpeg override within the source profile (or invalid path) cleared. Choose the existing ffmpeg.exe again in SunShot's recording options, or let SunShot download and verify its own copy.");
         }
 
         private static JObject ReadConfig(string path)

@@ -116,12 +116,15 @@ internal static class Checks
    var missing=ImportService.Prepare(source,destination);
    Check(!missing.HasUploaders && !missing.HasHotkeys && missing.HotkeyCount>0 && missing.Files.Count==3,"missing optional files accurately reported as isolated defaults");
    JObject ffmpegFixture=JObject.Parse(good);
-   ffmpegFixture["DefaultTaskSettings"]["CaptureSettings"]=new JObject{["FFmpegOptions"]=new JObject{["OverrideCLIPath"]=true,["CLIPath"]=Path.Combine(source,"Tools","ffmpeg.exe")}};
+   ffmpegFixture["DefaultTaskSettings"]["CaptureSettings"]=new JObject{["FFmpegOptions"]=new JObject{["OverrideCLIPath"]=true,["CLIPath"]=Path.Combine(source,"Tools","ffmpeg.exe"),["VideoSource"]="Synthetic camera",["AudioSource"]="Synthetic microphone"}};
    File.WriteAllText(appPath,ffmpegFixture.ToString());
    var isolatedRecorder=ImportService.Prepare(source,destination);
    JObject isolatedApp=JObject.Parse(Encoding.UTF8.GetString(isolatedRecorder.Files["ApplicationConfig.json"]));
    Check(!(bool)isolatedApp["DefaultTaskSettings"]["CaptureSettings"]["FFmpegOptions"]["OverrideCLIPath"] &&
-      (string)isolatedApp["DefaultTaskSettings"]["CaptureSettings"]["FFmpegOptions"]["CLIPath"]=="" && isolatedRecorder.Warnings.Any(x=>x.Contains("FFmpeg override")), "source profile FFmpeg override cleared and reported");
+       (string)isolatedApp["DefaultTaskSettings"]["CaptureSettings"]["FFmpegOptions"]["CLIPath"]=="" &&
+       (string)isolatedApp["DefaultTaskSettings"]["CaptureSettings"]["FFmpegOptions"]["VideoSource"]=="Synthetic camera" &&
+       (string)isolatedApp["DefaultTaskSettings"]["CaptureSettings"]["FFmpegOptions"]["AudioSource"]=="Synthetic microphone" &&
+       isolatedRecorder.Warnings.Any(x=>x.Contains("FFmpeg override") && x.Contains("Choose the existing ffmpeg.exe")), "source profile FFmpeg path is cleared and 21 device names are retained with guidance");
    File.WriteAllText(appPath,good);
 
    File.WriteAllText(appPath,good.Replace("\"ActionsToolbarRunAtStartup\": true", "\"Themes\": null,\"ActionsToolbarRunAtStartup\": true"));
