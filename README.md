@@ -23,11 +23,15 @@ See [what's new](CHANGELOG.md).
 
 ## Features
 
-- **Capture** regions, windows, full screens and scrolling pages.
-- **Record** video or GIFs. FFmpeg downloads the first time you need it.
-- **Edit** with arrows, text, shapes, blur and more.
-- **Keep your workflow** with hotkeys, capture history and task settings.
-- **Choose your look** with light and dark themes, in English or French.
+**Capture** regions, windows, full screens and scrolling pages.
+
+**Record** video or GIFs. FFmpeg downloads the first time you need it.
+
+**Edit** with arrows, text, shapes, blur and more.
+
+**Keep your workflow** with hotkeys, capture history and task settings.
+
+**Choose your look** with light and dark themes, in English or French.
 
 New profiles save captures locally. Uploading and automatic update checks are off until you turn them on. See the [privacy notes](docs/PRIVACY.md).
 
@@ -44,7 +48,7 @@ See the [migration guide](docs/MIGRATION.md) for what carries over.
 
 ## Contributing
 
-Bug reports, testing and C#/WinForms contributions are welcome. [Open an issue](https://github.com/SunSinD/SunShot/issues) for feedback. Development is AI-assisted.
+Bug reports, testing and C#/WinForms contributions are welcome. [Open an issue](https://github.com/SunSinD/SunShot/issues) for feedback. Development is assisted by AI.
 
 <details>
 <summary><b>Build from source</b></summary>
@@ -57,12 +61,12 @@ dotnet build SunShot/ShareX.csproj -c Release -p:Platform=x64 --self-contained t
 
 To package a clean, committed checkout, run `./build/Package.ps1`. It needs Inno Setup 6.5 or newer (or pass `-IsccPath`).
 
-See [testing](docs/TESTING.md) and [third-party software](docs/THIRD-PARTY.md).
+See [testing](docs/TESTING.md) and [third party software](docs/THIRD-PARTY.md).
 
 </details>
 
 ## Credits and license
 
-Based on [ShareX 21.0.0](https://github.com/ShareX/ShareX/tree/v21.0.0) by the ShareX team and contributors. SunShot is an independent project by **SunSinD** and is not affiliated with ShareX. Original notices, translations and third-party licenses are kept.
+Based on [ShareX 21.0.0](https://github.com/ShareX/ShareX/tree/v21.0.0) by the ShareX team and contributors. SunShot is an independent project by **SunSinD** and is not affiliated with ShareX. Original notices, translations and third party licenses are kept.
 
-Licensed under [GPL-3.0](LICENSE.txt).
+Licensed under [GPL 3.0](LICENSE.txt).
