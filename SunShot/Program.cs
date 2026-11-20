@@ -118,6 +118,7 @@ namespace ShareX
         public static bool Dev { get; } = false;
         public static bool MultiInstance { get; private set; }
         public static bool Portable { get; private set; }
+        public static bool PortableFromCommandLine { get; private set; }
         public static bool SilentRun { get; private set; }
         public static bool Sandbox { get; private set; }
         public static bool IsAdmin { get; private set; }
@@ -141,6 +142,9 @@ namespace ShareX
         #region Paths
 
         private const string PersonalPathConfigFileName = "SunShotPersonalPath.cfg";
+
+        // Per user state that must survive settings imports. The uninstaller reads and removes it.
+        public const string StateRegistryPath = @"Software\SunShot\State";
 
         public static readonly string DefaultPersonalFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), AppName);
         public static readonly string PortablePersonalFolder = FileHelpers.GetAbsolutePath(AppName);
@@ -382,6 +386,7 @@ namespace ShareX
             DebugHelper.WriteLine("Avalonia init finished.");
 
             SettingManager.LoadInitialSettings();
+            StartupManager.ApplyFirstRunDefault();
 
             UpdateManager = new ShareXUpdateManager();
             LanguageHelper.ChangeLanguage(Settings.Language);
@@ -490,6 +495,7 @@ namespace ShareX
                 if (CLI.IsCommandExist("portable", "p"))
                 {
                     Portable = true;
+                    PortableFromCommandLine = true;
                     CustomPersonalPath = PortablePersonalFolder;
                     PersonalPathDetectionMethod = "Portable CLI flag";
                 }

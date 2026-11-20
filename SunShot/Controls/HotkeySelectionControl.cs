@@ -193,6 +193,7 @@ namespace ShareX
             EditingHotkey = true;
 
             Program.HotkeyManager.IgnoreHotkeys = true;
+            Program.HotkeyManager.PrintScreenEditing = PrintScreenPressedWhileEditing;
 
             HotkeySettings.HotkeyInfo.Hotkey = Keys.None;
             HotkeySettings.HotkeyInfo.Win = false;
@@ -206,6 +207,7 @@ namespace ShareX
             EditingHotkey = false;
 
             Program.HotkeyManager.IgnoreHotkeys = false;
+            Program.HotkeyManager.PrintScreenEditing = null;
 
             if (HotkeySettings.HotkeyInfo.IsOnlyModifiers)
             {
@@ -214,6 +216,16 @@ namespace ShareX
 
             OnHotkeyChanged();
             UpdateHotkeyStatus();
+        }
+
+        // Bare Print Screen is caught before Windows when the Print Screen key hook runs, so the button never sees it.
+        private void PrintScreenPressedWhileEditing()
+        {
+            if (EditingHotkey && !IsDisposed && btnHotkey.Focused && Form.ActiveForm == FindForm())
+            {
+                HotkeySettings.HotkeyInfo.Hotkey = Keys.PrintScreen;
+                StopEditing();
+            }
         }
 
         public void OpenTaskMenu()

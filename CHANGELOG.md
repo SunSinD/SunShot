@@ -1,5 +1,14 @@
 # Changes
 
+## 0.1.3 (2026-11-19)
+
+- When a hotkey uses Print Screen alone, SunShot now gets the key even if Windows has it set to open the Snipping Tool. No Windows setting is changed. You can turn this off in **Application settings > General**.
+- A new installed profile starts with Windows by default. The option is now at the top of **Application settings > General**.
+- Portable copies use their own startup entry, so they never replace the installed one. Older portable entries move over automatically.
+- Start with Windows clears a leftover disabled entry when you turn it back on.
+- Fixed a capture error when the active window closes right before a screenshot.
+- Uninstalling also removes the startup entry and the SunShot state saved in the registry.
+
 ## 0.1.2 (2026-11-09)
 
 - Install and run on Windows 10 version 2004 or newer, not just Windows 11.

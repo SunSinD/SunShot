@@ -5,7 +5,7 @@
   #error PackageDir is required
 #endif
 #ifndef AppVersion
-  #define AppVersion "0.1.2"
+  #define AppVersion "0.1.3"
 #endif
 
 [Setup]
@@ -63,6 +63,9 @@ Root: HKCU; Subkey: "Software\Classes\.sxie\OpenWithProgids"; ValueName: "SunSho
 Root: HKCU; Subkey: "Software\Classes\SunShot.sxie"; Flags: dontcreatekey uninsdeletekey
 Root: HKCU; Subkey: "Software\Google\Chrome\NativeMessagingHosts\com.sunshot.sunshot"; Flags: dontcreatekey uninsdeletekey
 Root: HKCU; Subkey: "Software\Mozilla\NativeMessagingHosts\sunshot"; Flags: dontcreatekey uninsdeletekey
+Root: HKCU; Subkey: "Software\SunShot"; Flags: dontcreatekey uninsdeletekeyifempty
+Root: HKCU; Subkey: "Software\SunShot\State"; Flags: dontcreatekey uninsdeletekey
+Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\StartupFolder"; ValueType: none; ValueName: "SunShot.lnk"; Flags: dontcreatekey uninsdeletevalue
 
 [Code]
 function IsNoRun(): Boolean;

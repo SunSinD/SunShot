@@ -58,6 +58,7 @@ namespace ShareX
         #region General
 
         public SupportedLanguage Language = SupportedLanguage.English;
+        public bool UsePrintScreenKey = true;
         public bool ShowTray = true;
         public bool SilentRun = false;
         public bool TrayIconProgressEnabled = true;

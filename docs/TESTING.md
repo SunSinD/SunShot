@@ -21,3 +21,4 @@ Use a synthetic window and an isolated portable copy. Do not use a personal Shar
 - 0.1.0: release build, dependency audit, regression, CoreChecks and portable smoke tests passed.
 - 0.1.1: release build, dependency audit, regression with the pinned archive, CoreChecks and import UI checks passed.
 - 0.1.2: release build, dependency audit, regression and CoreChecks passed. Packaging produced all four release files.
+- 0.1.3: release build, regression and CoreChecks passed. A portable copy caught bare Print Screen with the Windows Snipping Tool shortcut on, and Alt + Print Screen still used the normal hotkey.

@@ -1,4 +1,4 @@
-#region License Information (GPL v3)
+﻿#region License Information (GPL v3)
 
 /*
     ShareX - A program that allows you to take screenshots and share any file type
@@ -38,6 +38,8 @@ namespace ShareX
     {
         private bool ready;
         private string lastPersonalPath;
+        private CheckBox cbPrintScreenKey;
+        private Label lblPrintScreenKeyStatus;
 
         public ApplicationSettingsForm()
         {
@@ -57,15 +59,17 @@ namespace ShareX
 
         private void tttvMain_TabChanged(TabPage tabPage)
         {
-            if (tabPage == tpIntegration)
+            if (tabPage == tpGeneral)
             {
                 UpdateStartWithWindows();
+                UpdatePrintScreenKeyStatus();
             }
         }
 
         private void InitializeControls()
         {
             InitializeComponent();
+            ArrangeGeneralOptions();
             foreach (CheckBox option in new[] { cbStartWithWindows, cbShellContextMenu, cbEditWithShareX, cbUseWhiteShareXIcon, cbSilentRun })
                 option.Text = option.Text.Replace("ShareX", Program.AppName);
 
@@ -119,6 +123,9 @@ namespace ShareX
             cbTrayLeftDoubleClickAction.SelectedIndex = (int)Program.Settings.TrayLeftDoubleClickAction;
             cbTrayLeftClickAction.SelectedIndex = (int)Program.Settings.TrayLeftClickAction;
             cbTrayMiddleClickAction.SelectedIndex = (int)Program.Settings.TrayMiddleClickAction;
+
+            UpdateStartWithWindows();
+            UpdatePrintScreenKeyStatus();
 
 #if STEAM || MicrosoftStore
             cbAutoCheckUpdate.Visible = false;
@@ -285,6 +292,7 @@ namespace ShareX
 
         private void UpdateStartWithWindows()
         {
+            bool wasReady = ready;
             ready = false;
 
             cbStartWithWindows.Text = Resources.ApplicationSettingsForm_cbStartWithWindows_Text;
@@ -317,8 +325,10 @@ namespace ShareX
             {
                 e.ShowError();
             }
-
-            ready = true;
+            finally
+            {
+                ready = wasReady;
+            }
         }
 
         private void UpdateProxyControls()
@@ -383,6 +393,125 @@ namespace ShareX
         }
 
         #region General
+
+        // Start with Windows and the Print Screen key are the options people look for first, so they sit at the top of General.
+        // Layout is done here instead of the designer so every translated layout keeps working.
+        private void ArrangeGeneralOptions()
+        {
+            int row = cbTrayIconProgressEnabled.Top - cbShowTray.Top;
+            int top = cbShowTray.Top;
+            int left = cbShowTray.Left;
+
+            foreach (Control control in tpGeneral.Controls)
+            {
+                if (control.Top >= top)
+                {
+                    control.Top += row * 3;
+                }
+            }
+
+            int oldTop = cbStartWithWindows.Top;
+            int windowsRow = cbShellContextMenu.Top - oldTop;
+            gbWindows.Controls.Remove(cbStartWithWindows);
+
+            foreach (Control control in gbWindows.Controls)
+            {
+                if (control.Top > oldTop)
+                {
+                    control.Top -= windowsRow;
+                }
+            }
+
+            gbWindows.Height -= windowsRow;
+
+            foreach (Control control in tpIntegration.Controls)
+            {
+                if (control != gbWindows && control.Top > gbWindows.Top)
+                {
+                    control.Top -= windowsRow;
+                }
+            }
+
+            cbStartWithWindows.Location = new Point(left, top);
+            tpGeneral.Controls.Add(cbStartWithWindows);
+
+            cbPrintScreenKey = new CheckBox()
+            {
+                AutoSize = true,
+                Location = new Point(left, top + row),
+                Name = "cbPrintScreenKey",
+                Text = SunShotUI.Text("PrintScreenKey"),
+                UseVisualStyleBackColor = true
+            };
+            cbPrintScreenKey.CheckedChanged += cbPrintScreenKey_CheckedChanged;
+            tpGeneral.Controls.Add(cbPrintScreenKey);
+
+            lblPrintScreenKeyStatus = new Label()
+            {
+                AutoSize = true,
+                Location = new Point(left + row - 4, top + (row * 2) + 1),
+                Name = "lblPrintScreenKeyStatus"
+            };
+            tpGeneral.Controls.Add(lblPrintScreenKeyStatus);
+
+            int tabIndex = 0;
+
+            foreach (Control control in tpGeneral.Controls.Cast<Control>().OrderBy(x => x.Top).ThenBy(x => x.Left).ToArray())
+            {
+                control.TabIndex = tabIndex++;
+            }
+
+            // Grow the window so the moved rows still fit, and scroll if the screen is too small.
+            int overflow = tpGeneral.Controls.Cast<Control>().Max(x => x.Bottom) + (row / 2) - tpGeneral.ClientSize.Height;
+
+            if (overflow > 0)
+            {
+                MinimumSize = new Size(MinimumSize.Width, MinimumSize.Height + overflow);
+                Height += overflow;
+            }
+
+            tpGeneral.AutoScroll = true;
+        }
+
+        private void UpdatePrintScreenKeyStatus()
+        {
+            bool wasReady = ready;
+            ready = false;
+            cbPrintScreenKey.Checked = Program.Settings.UsePrintScreenKey;
+            ready = wasReady;
+
+            HotkeyManager manager = Program.HotkeyManager;
+            string status;
+
+            if (!Program.Settings.UsePrintScreenKey)
+            {
+                status = "PrintScreenOff";
+            }
+            else if (manager == null || !manager.HasBarePrintScreenHotkey)
+            {
+                status = "PrintScreenNotAssigned";
+            }
+            else if (!manager.IsPrintScreenKeyHooked)
+            {
+                status = "PrintScreenFailed";
+            }
+            else
+            {
+                status = "PrintScreenTaken";
+            }
+
+            lblPrintScreenKeyStatus.Text = SunShotUI.Text(status);
+        }
+
+        private void cbPrintScreenKey_CheckedChanged(object sender, EventArgs e)
+        {
+            if (ready)
+            {
+                Program.Settings.UsePrintScreenKey = cbPrintScreenKey.Checked;
+                Program.HotkeyManager?.UpdatePrintScreenKey();
+                UpdatePrintScreenKeyStatus();
+            }
+        }
 
         private void cbShowTray_CheckedChanged(object sender, EventArgs e)
         {

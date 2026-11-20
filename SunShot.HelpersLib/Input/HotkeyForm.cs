@@ -122,7 +122,7 @@ namespace ShareX.HelpersLib
             HotkeyPress?.Invoke(id, key, modifier);
         }
 
-        private bool CheckRepeatLimitTime()
+        public bool CheckRepeatLimitTime()
         {
             if (HotkeyRepeatLimit > 0)
             {

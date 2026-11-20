@@ -25,6 +25,7 @@
 
 using ShareX.HelpersLib;
 using ShareX.Properties;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
@@ -34,7 +35,17 @@ namespace ShareX
     public class HotkeyManager
     {
         public List<HotkeySettings> Hotkeys { get; private set; }
-        public bool IgnoreHotkeys { get; set; }
+        private bool ignoreHotkeys;
+
+        public bool IgnoreHotkeys
+        {
+            get => ignoreHotkeys;
+            set
+            {
+                ignoreHotkeys = value;
+                RefreshPrintScreenHotkey();
+            }
+        }
 
         public delegate void HotkeyTriggerEventHandler(HotkeySettings hotkeySetting);
         public delegate void HotkeysToggledEventHandler(bool hotkeysEnabled);
@@ -43,12 +54,40 @@ namespace ShareX
         public HotkeysToggledEventHandler HotkeysToggledTrigger;
 
         private HotkeyForm hotkeyForm;
+        private PrintScreenKeyHook printScreenKeyHook;
+        private Action printScreenEditing;
+
+        // Set while a hotkey box is waiting for a key, so a bare Print Screen press reaches it instead of Windows.
+        public Action PrintScreenEditing
+        {
+            get => printScreenEditing;
+            set
+            {
+                printScreenEditing = value;
+                RefreshPrintScreenHotkey();
+            }
+        }
+
+        public bool IsPrintScreenKeyHooked => printScreenKeyHook != null && printScreenKeyHook.IsRunning;
+
+        public bool HasBarePrintScreenHotkey => GetBarePrintScreenHotkey() != null;
 
         public HotkeyManager(HotkeyForm form)
         {
             hotkeyForm = form;
             hotkeyForm.HotkeyPress += HotkeyForm_HotkeyPress;
             hotkeyForm.FormClosed += HotkeyForm_FormClosed;
+        }
+
+        private void PrintScreenKeyHook_Pressed(ushort id)
+        {
+            HotkeySettings hotkeySetting = GetBarePrintScreenHotkey();
+
+            // The press was queued on the hook thread, so make sure the same binding is still active.
+            if (hotkeySetting != null && hotkeySetting.HotkeyInfo.ID == id && hotkeyForm.CheckRepeatLimitTime())
+            {
+                HotkeyForm_HotkeyPress(id, Keys.PrintScreen, Modifiers.None);
+            }
         }
 
         private void HotkeyForm_HotkeyPress(ushort id, Keys key, Modifiers modifier)
@@ -70,6 +109,8 @@ namespace ShareX
             {
                 UnregisterAllHotkeys(false);
             }
+
+            StopPrintScreenKeyHook();
         }
 
         public void UpdateHotkeys(List<HotkeySettings> hotkeys, bool showFailedHotkeys)
@@ -82,6 +123,7 @@ namespace ShareX
             Hotkeys = hotkeys;
 
             RegisterAllHotkeys();
+            UpdatePrintScreenKey();
 
             if (showFailedHotkeys)
             {
@@ -123,6 +165,8 @@ namespace ShareX
             {
                 Hotkeys.Add(hotkeySetting);
             }
+
+            RefreshPrintScreenHotkey();
         }
 
         public void RegisterAllHotkeys()
@@ -161,6 +205,8 @@ namespace ShareX
             {
                 Hotkeys.Remove(hotkeySetting);
             }
+
+            RefreshPrintScreenHotkey();
         }
 
         public void UnregisterAllHotkeys(bool removeFromList = true, bool temporary = false)
@@ -188,7 +234,56 @@ namespace ShareX
                 UnregisterAllHotkeys(false, true);
             }
 
+            UpdatePrintScreenKey();
             HotkeysToggledTrigger?.Invoke(hotkeysDisabled);
+        }
+
+        /// <summary>
+        /// Starts or stops catching bare Print Screen before the Windows screen capture shortcut gets it.
+        /// The registry can say the Windows shortcut is off before that applies (it needs a sign in), so the hook
+        /// follows the SunShot option and only takes the key while a hotkey uses Print Screen alone.
+        /// </summary>
+        public void UpdatePrintScreenKey()
+        {
+            bool needed = Program.Settings.UsePrintScreenKey && !Program.Sandbox && hotkeyForm != null && !hotkeyForm.IsDisposed;
+
+            if (needed && printScreenKeyHook == null)
+            {
+                printScreenKeyHook = new PrintScreenKeyHook(hotkeyForm, PrintScreenKeyHook_Pressed,
+                    () => Program.Settings.DisableHotkeysOnFullscreen && CaptureHelpers.IsActiveWindowFullscreen());
+
+                if (printScreenKeyHook.IsRunning)
+                {
+                    DebugHelper.WriteLine("Print Screen key hook started.");
+                }
+            }
+            else if (!needed)
+            {
+                StopPrintScreenKeyHook();
+            }
+
+            RefreshPrintScreenHotkey();
+        }
+
+        private HotkeySettings GetBarePrintScreenHotkey()
+        {
+            return Hotkeys?.FirstOrDefault(x => x.HotkeyInfo.Status == HotkeyStatus.Registered &&
+                x.HotkeyInfo.KeyCode == Keys.PrintScreen && x.HotkeyInfo.ModifiersEnum == Modifiers.None);
+        }
+
+        private void RefreshPrintScreenHotkey()
+        {
+            printScreenKeyHook?.SetTargets(GetBarePrintScreenHotkey()?.HotkeyInfo.ID ?? 0, printScreenEditing, ignoreHotkeys);
+        }
+
+        private void StopPrintScreenKeyHook()
+        {
+            if (printScreenKeyHook != null)
+            {
+                printScreenKeyHook.Dispose();
+                printScreenKeyHook = null;
+                DebugHelper.WriteLine("Print Screen key hook stopped.");
+            }
         }
 
         public void ShowFailedHotkeys()

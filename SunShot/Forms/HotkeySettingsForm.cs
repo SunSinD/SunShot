@@ -54,6 +54,7 @@ namespace ShareX
             if (manager != null)
             {
                 manager.IgnoreHotkeys = false;
+                manager.PrintScreenEditing = null;
                 manager.HotkeysToggledTrigger -= HandleHotkeysToggle;
             }
         }
